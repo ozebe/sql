@@ -1,27 +1,79 @@
-Rodar na seguinte ordem:
-GA -> RH -> GE -> GF -> MA
+# PostgreSQL ERP
+>  Estrutura SQL para controle de usuários, estoque, vendas e etc.
 
-novo_trigger_GE para fins de teste.
 
-Caso queira tabelas de módulos específicos, verificar dentro de cada arquivo a parte "PRE-REQUISITOS"
+![](https://img.shields.io/github/license/ozebe/sql.svg)
+![](https://img.shields.io/github/issues/ozebe/sql.svg)
+![](https://img.shields.io/github/commit-activity/m/ozebe/sql.svg)
+![](https://img.shields.io/github/repo-size/ozebe/sql.svg)
 
-Nomenclatura de tabelas
+Estrutura de banco de dados composta por módulos, como módulos de gestão de acesso, gestão de RH, gestão de vendas e etc.
 
-views
-são identificadas por vw_xxxxxx_xxxxx
+![](header.png)
+## Pré requisitos
 
-Nomes das Tabelas
-rh_xxxxxx_xxxxx
-são tabelas destinadas á recursos humanos, nelas possuem contatos, endereços, pessoas físicas, fornecedores e etc.
+*Servidor PostgreSQL configurado.*
 
-ge_xxxxxx_xxxxx
-São tabelas destinadas á gestão do estoque, contendo, estoque, grupo de produto, lote, movimentação de estoque, operação de estoque, produto, unidade de medida e etc
+## Configuração/Instalação
 
-ga_xxxxxx_xxxxx
-São tabelas destinadas á gestão de acesso, contendo tabelas como usuario, nivel de acesso e etc
+Cada arquivo possui tudo que é necessário para a configuração inicial, tanto suas views e seus triggers.
+Caso queira algum módulo especifico, como gestão de acesso, RH ou algo do tipo, é necessário abrir cada módulo e verificar a parte de "requisitos" e executar os arquivos ou módulos dos requisitos.
 
-gf_xxxxxx_xxxxx
-São tabelas destinadas á gestão de finanças
+#### Nomenclatura de tabelas, views e triggers
 
-ma_xxxxxx_xxxxx
-São tabelas de miscelanea como agenda e etc
+**views são identificadas por vw_xxxxxx_xxxxx**
+
+
+**Nomes das Tabelas**
+
+**rh_xxxxxx_xxxxx** : * são tabelas destinadas á recursos humanos, nelas possuem pessoas físicas, funcionários, fornecedores e etc.*
+
+**ge_xxxxxx_xxxxx** : *São tabelas destinadas á gestão do estoque, contendo, estoque, grupo de produto, lote, movimentação de estoque, operação de estoque, produto, unidade de medida e etc.*
+
+**ga_xxxxxx_xxxxx** :  *São tabelas destinadas á gestão de acesso, contendo tabelas como usuario, nivel de acesso e etc.*
+
+**gf_xxxxxx_xxxxx** :  *São tabelas destinadas á gestão de finanças.*
+
+**gv_xxxxxx_xxxxx** : *São tabelas destinadas a gestão de vendas, com cadastro de cartões, tipos de pagamento, efetivação de parcelas*
+
+**ma_xxxxxx_xxxxx** :  *São tabelas de miscelanea como agenda e etc*
+
+## Exemplos de uso
+
+Em breve.
+
+_Para mais informações visualize a [Wiki][wiki]._
+
+## Histórico de alterações
+
+* 1.0.1-alpha
+    * CHANGE: Corrigido informações das tabelas do módulo RH
+	* ADD: VERSION
+* 1.0.0-alpha
+    * ADD:  GA e RH
+* 0.0.1
+    * Criado repositório inicial
+
+## Meta
+
+Wesley Ozebe – Criador
+
+Distribuído sob a licença MIT. Veja ``LICENSE`` para mais informações.
+
+[https://github.com/ozebe/sql/blob/master/LICENSE](https://github.com/ozebe/sql/blob/master/LICENSE)
+
+## Contribuindo
+
+1. Realize o Fork (<https://github.com/ozebe/sql/fork>)
+2. Crie a sua branch (`git checkout -b feature/fooBar`)
+3. Realize o commit (`git commit -am 'Add some fooBar'`)
+4. Push para a branch (`git push origin feature/fooBar`)
+5. Crie um novo pull request.
+
+<!-- Markdown link & img dfn's -->
+[npm-image]: https://img.shields.io/npm/v/datadog-metrics.svg?style=flat-square
+[npm-url]: https://npmjs.org/package/datadog-metrics
+[npm-downloads]: https://img.shields.io/npm/dm/datadog-metrics.svg?style=flat-square
+[travis-image]: https://img.shields.io/travis/dbader/node-datadog-metrics/master.svg?style=flat-square
+[travis-url]: https://travis-ci.org/dbader/node-datadog-metrics
+[wiki]: https://github.com/yourname/yourproject/wiki
