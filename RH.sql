@@ -18,6 +18,13 @@ editado TIMESTAMP,
 PRIMARY KEY(id)
 );
 
+CREATE TABLE rh_situacao_escolar(
+id SERIAL NOT NULL UNIQUE,
+descricao VARCHAR(255),
+criado TIMESTAMP NOT NULL,
+editado TIMESTAMP,
+PRIMARY key(id)
+);
 
 CREATE TABLE rh_area_profissao(
 id SERIAL NOT NULL UNIQUE,
@@ -29,81 +36,47 @@ PRIMARY KEY(id)
 
 CREATE TABLE rh_tipo_profissao(
 id SERIAL NOT NULL UNIQUE,
-areaId INTEGER NOT NULL,
+rh_area_prof_id INTEGER NOT NULL,
 descricao VARCHAR(255) NOT NULL,
 criado TIMESTAMP NOT NULL,
 editado TIMESTAMP,
 PRIMARY KEY(id),
-FOREIGN KEY (areaId) REFERENCES rh_area_profissao(id)
+FOREIGN KEY (rh_area_prof_id) REFERENCES rh_area_profissao(id)
 );
 
 CREATE TABLE rh_profissao(
 id SERIAL NOT NULL UNIQUE,
-tipoProfissaoId INTEGER NOT NULL,
-salario INTEGER NOT NULL,
+rh_tp_prof_id INTEGER NOT NULL,
+salario NUMERIC(10,2), --verificar caso o cadastro de pessoa fisica seja apenas para um cliente e etc
 admissao DATE,
 criado TIMESTAMP NOT NULL,
 editado TIMESTAMP,
 PRIMARY KEY(id),
-FOREIGN KEY (tipoProfissaoId) REFERENCES rh_tipo_profissao(id)
-);
-
-CREATE TABLE rh_contato(
-id SERIAL NOT NULL UNIQUE,
-ddd  VARCHAR(10),
-telefone VARCHAR(255) NOT NULL,
-email VARCHAR(255) UNIQUE,
-criado TIMESTAMP NOT NULL,
-editado TIMESTAMP,
-PRIMARY KEY(id)
-);
-
-CREATE TABLE rh_endereco(
-id SERIAL NOT NULL UNIQUE,
-logradouro VARCHAR(255) NOT NULL,
-numero INTEGER NOT NULL,
-cep VARCHAR(10) NOT NULL,
-complemento VARCHAR(255),
-bairro VARCHAR(255) NOT NULL,
-localidade VARCHAR(255) NOT NULL,
-uf VARCHAR(2),
-criado TIMESTAMP NOT NULL,
-editado TIMESTAMP,
-PRIMARY KEY(id)
-);
-
-CREATE TABLE rh_situacao_escolar(
-id SERIAL NOT NULL UNIQUE,
-descricao VARCHAR(255),
-criado TIMESTAMP NOT NULL,
-editado TIMESTAMP,
-PRIMARY key(id)
-);
-
-CREATE TABLE rh_escolaridade_situacao(
-id SERIAL NOT NULL UNIQUE,
-idEscolaridade INTEGER NOT NULL,
-idSituacao INTEGER NOT NULL,
-FOREIGN KEY(idEscolaridade) REFERENCES rh_escolaridade(id),
-FOREIGN KEY(idSituacao) REFERENCES rh_situacao_escolar(id),
-PRIMARY key(id)
+FOREIGN KEY (rh_tp_prof_id) REFERENCES rh_tipo_profissao(id)
 );
 
 CREATE TABLE rh_pessoa_fisica(
 id SERIAL NOT NULL UNIQUE,
 nome VARCHAR(255) NOT NULL,
 cpf VARCHAR(11) NOT NULL UNIQUE,
-dataNascimento DATE NOT NULL,
+data_nasc DATE NOT NULL,
 sexo CHAR NOT NULL,
-contatoId INTEGER NOT NULL,
-enderecoId INTEGER NOT NULL,
-escolaridade_situacao INTEGER,
-profissaoId INTEGER,
+telefone VARCHAR(20) NOT NULL,
+email VARCHAR(255) UNIQUE,
+end_logr VARCHAR(255) NOT NULL, --logradouro
+end_num INTEGER NOT NULL, --número
+end_cep VARCHAR(10) NOT NULL, --cep
+end_compl VARCHAR(255), --complemento
+end_bairro VARCHAR(255) NOT NULL, --bairro
+end_localid VARCHAR(255) NOT NULL, --localidade
+end_uf VARCHAR(2), --UF PR, SC e etc
+id_rh_sit_escol INTEGER, --para cadastro de funcionario
+id_rh_escol INTEGER, --para cadastro de funcionario
+id_profissao INTEGER, --informação complementar no cadastro do cliente
 criado TIMESTAMP NOT NULL,
 editado TIMESTAMP,
 PRIMARY KEY(id),
-FOREIGN KEY (contatoId) REFERENCES rh_contato(id),
-FOREIGN KEY (enderecoId) REFERENCES rh_endereco(id),
-FOREIGN KEY (profissaoId) REFERENCES rh_profissao(id),
-FOREIGN KEY (escolaridade_situacao) REFERENCES rh_escolaridade_situacao(id)
+FOREIGN KEY (id_profissao) REFERENCES rh_profissao(id), --dados para analise de credito, como analista de sistema, salario tal, admissão tal.
+FOREIGN KEY (id_rh_sit_escol) REFERENCES rh_situacao_escolar(id),
+FOREIGN KEY (id_rh_escol) REFERENCES rh_escolaridade(id)
 );
