@@ -46,6 +46,9 @@ _Para mais informações visualize a [Wiki][wiki]._
 
 ## Histórico de alterações
 
+* 1.0.4-alpha
+    * CHANGE: Corrigido informações do módulo de RH
+	* ADD: adicionado rh_funcionario e todos os dados pertinentes a seus cadastro
 * 1.0.1-alpha
     * CHANGE: Corrigido informações das tabelas do módulo RH
 	* ADD: VERSION
