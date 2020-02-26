@@ -86,17 +86,7 @@ id SERIAL NOT NULL UNIQUE,
 descricao VARCHAR(255) NOT NULL,
 criado TIMESTAMP NOT NULL,
 editado TIMESTAMP,
-);
-
-CREATE TABLE dependente(
-id SERIAL NOT NULL UNIQUE,
-id_funcionario INTEGER NOT NULL,
-nome VARCHAR(255),
-cpf VARCHAR(11) NOT NULL,
-data_nasc DATE NOT NULL,
-grau_parentesco VARCHAR(255),
-criado TIMESTAMP NOT NULL,
-editado TIMESTAMP,
+PRIMARY KEY(id)
 );
 
 CREATE TABLE funcionario(
@@ -129,7 +119,7 @@ conta  VARCHAR(20) NOT NULL, --dados bancárias, conta.
 data_admissao DATE NOT NULL, --data de admissão do funcionario
 salario NUMERIC(10,2) NOT NULL, --salário mensal do funcionario
 adicionais NUMERIC(10,2), --adicionais como adicionais noturnos e etc
-obs_adicionais VARCHAR(255) --observações dos adicionais, ex: adicional noturno
+obs_adicionais VARCHAR(255), --observações dos adicionais, ex: adicional noturno
 rh_tp_prof_id INTEGER NOT NULL, --profissão do funcionário, nessa tabela tem o tipo e área da profissão, ex: ANALISTA I, TI
 --verificar se o id passado da rh_pessoa_fisica já tem um id_profissao, caso tenha, não pode ser adicionado dois ao cadastrar o funcionário.
 id_jornada_trabalho INTEGER NOT NULL, --jornada de trabalho, ex: 8h diárias, seg a sex.
@@ -144,4 +134,17 @@ PRIMARY KEY(id),
 FOREIGN KEY (rh_tp_prof_id) REFERENCES rh_tipo_profissao(id),
 FOREIGN KEY (id_rh_pessoa_fis) REFERENCES rh_pessoa_fisica(id),
 FOREIGN KEY (id_jornada_trabalho) REFERENCES jornada_trabalho(id)
+);
+
+CREATE TABLE dependente(
+id SERIAL NOT NULL UNIQUE,
+id_funcionario INTEGER NOT NULL,
+nome VARCHAR(255),
+cpf VARCHAR(11) NOT NULL,
+data_nasc DATE NOT NULL,
+grau_parentesco VARCHAR(255),
+criado TIMESTAMP NOT NULL,
+editado TIMESTAMP,
+PRIMARY KEY(id),
+FOREIGN KEY(id_funcionario) REFERENCES funcionario(id)
 );
