@@ -81,7 +81,7 @@ FOREIGN KEY (id_rh_sit_escol) REFERENCES rh_situacao_escolar(id),
 FOREIGN KEY (id_rh_escol) REFERENCES rh_escolaridade(id)
 );
 
-CREATE TABLE jornada_trabalho(
+CREATE TABLE rh_jornada_trabalho(
 id SERIAL NOT NULL UNIQUE,
 descricao VARCHAR(255) NOT NULL,
 criado TIMESTAMP NOT NULL,
@@ -89,7 +89,7 @@ editado TIMESTAMP,
 PRIMARY KEY(id)
 );
 
-CREATE TABLE funcionario(
+CREATE TABLE rh_funcionario(
 id SERIAL NOT NULL UNIQUE,
 id_rh_pessoa_fis INTEGER NOT NULL UNIQUE, --id da tabela rh_pessoa_fisica
 natur VARCHAR(255) NOT NULL, --naturalidade ex: TOLEDO/PR
@@ -136,7 +136,7 @@ FOREIGN KEY (id_rh_pessoa_fis) REFERENCES rh_pessoa_fisica(id),
 FOREIGN KEY (id_jornada_trabalho) REFERENCES jornada_trabalho(id)
 );
 
-CREATE TABLE dependente(
+CREATE TABLE rh_dependente(
 id SERIAL NOT NULL UNIQUE,
 id_funcionario INTEGER NOT NULL,
 nome VARCHAR(255),
