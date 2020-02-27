@@ -17,7 +17,7 @@ Estrutura de banco de dados composta por módulos, como módulos de gestão de a
 ## Configuração/Instalação
 
 Cada arquivo possui tudo que é necessário para a configuração inicial, tanto suas views e seus triggers.
-Caso queira algum módulo especifico, como gestão de acesso, RH ou algo do tipo, é necessário abrir cada módulo e verificar a parte de "requisitos" e executar os arquivos ou módulos dos requisitos.
+Caso queira algum módulo especifico, como gestão de acesso, RH ou algo do tipo, é necessário abrir cada módulo e verificar a parte de "requisitos" e executar os arquivos ou módulos dos requisitos. Lembrando que marcações de commit betas ou alfas não devem ser utilizados em produção, apenas para testes e adequações.
 
 #### Nomenclatura de tabelas, views e triggers
 
