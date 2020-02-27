@@ -6,7 +6,7 @@
 -- |____/|____/|_____|  \____|\___||___/\__\__,_|\___/  /_/   \_\___\___||___/___/\___/ 
 
 ----------------------------------------------------------------------------------------------------------                                                       --ga_xxxxxx_xxxxx
---São tabelas destinadas á gestão de acesso, contendo tabelas como usuario, nivel de acesso e etc                            
+--São tabelas destinadas á gestão de acesso, contendo tabelas como usuario, nivel de acesso e nível por usuário.                            
 --PRE-REQUISITOS: Nenhum
 
 CREATE TABLE ga_nivel_acesso(
