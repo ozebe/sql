@@ -7,7 +7,8 @@
                                                                  
 --------------------------------------------------------------------------
 --rh_xxxxxx_xxxxx
---são tabelas destinadas á recursos humanos, nelas possuem contatos, endereços, pessoas físicas, fornecedores e etc.
+--são tabelas destinadas á recursos humanos, nelas possuem pessoas físicas, níveis de escolaridade e situações escolares, areas de profissão,
+-- funcionários e etc.
 --PRE-REQUISITOS: Nenhum
 
 CREATE TABLE rh_escolaridade(
