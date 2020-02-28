@@ -10,8 +10,8 @@
 
 --ge_xxxxxx_xxxxx
 --São tabelas destinadas á gestão do estoque, contendo, estoque, grupo de produto, lote, movimentação de estoque, operação de estoque, produto, unidade de --medida e etc
---PRE-REQUISITOS: GA, RH
---ga_nivel_acesso, ga_usuario, rh_endereco, rh_contato
+--PRE-REQUISITOS: GA
+--ga_nivel_acesso, ga_usuario
 
 --unidade de medida, ex: UN, KG, GR, TON
 CREATE TABLE ge_unidade_medida(
@@ -196,7 +196,7 @@ FOREIGN KEY(id_ge_fornecedor) REFERENCES ge_fornecedor(id)
  --    \/     |_____| |______|     \/  \/     |_____/ 
 --------------------------------------------------------------------------
 --VIEW FORNECEDORES
-CREATE OR REPLACE VIEW public.vw_fornecedores
+CREATE OR REPLACE VIEW public.vw_ge_fornecedores
 AS SELECT f.razao_social,
     f.nome_fantasia,
     f.telefone,
@@ -227,8 +227,9 @@ AS SELECT f.razao_social,
    FROM ge_fornecedor f
 -------------------------------------------------------------------------------
 --VIEW MOVIMENTACOES DE ESTOQUE quantiade, valor
-CREATE OR REPLACE VIEW public.vw_movs_estoque
+CREATE OR REPLACE VIEW public.vw_ge_movs_estoque
 AS SELECT ge_mov_estoque.id AS id_mov_estoque,
+	p.codigo AS cod_produto,
 	p.descricao AS desc_produto,
     ope.tipo AS tipo_op_estoque,
 	ope.descricao AS operacao_estoque,
@@ -253,48 +254,59 @@ AS SELECT ge_mov_estoque.id AS id_mov_estoque,
 -------------------------------------------------------------------------------
 --corrigir views e triggers
 --VIEW PRODUTOS E RESPECTIVOS FORNECEDORES
- CREATE OR REPLACE VIEW public.vw_produto_fornecedor
+ CREATE OR REPLACE VIEW public.vw_ge_produto_fornecedor
 AS SELECT ge_fornecedor.id AS id_fornecedor,
-	ge_fornecedor.razaos AS razao_social_fornecedor,
+	ge_fornecedor.razao_social AS razao_social_fornecedor,
     ge_fornecedor.cnpj,
-	p.id AS id_produto,
+	p.codigo AS cod_produto,
     p.descricao AS desc_produto,
     p.cod_barras AS cod_barras_produto,
 	um.descricao AS unid_medida,
     ge_produto_fornecedor.valor_custo,
 	ge_produto_fornecedor.valor_venda,
-    ge_produto_fornecedor.quantiaestoque AS quantidade_em_estoque,
+    ge_produto_fornecedor.quantia_estoque AS quantidade_em_estoque,
 	p.min_estoque AS minimo_estoque,
-    ge_lote.numlote AS numero_lote_prod,
+    ge_lote.num_lote AS numero_lote_prod,
     ga_usuario.nome AS usuario_que_movimentou,
     ge_produto_fornecedor.criado,
     ge_produto_fornecedor.editado
    FROM ge_produto_fornecedor
-     JOIN ge_produto p ON ge_produto_fornecedor.idproduto = p.id
+     JOIN ge_produto p ON ge_produto_fornecedor.id_ge_prod = p.id
      JOIN ge_unidade_medida um ON p.id_unid_medida = um.id
-     JOIN ge_lote ON ge_produto_fornecedor.idlote = ge_lote.id
-     JOIN ge_fornecedor ON ge_produto_fornecedor.idfornecedor = ge_fornecedor.id
-     JOIN ga_usuario ON ge_produto_fornecedor.idusuario = ga_usuario.id; 
+     JOIN ge_lote ON ge_produto_fornecedor.id_ge_lote = ge_lote.id
+     JOIN ge_fornecedor ON ge_produto_fornecedor.id_ge_fornecedor = ge_fornecedor.id
+     JOIN ga_usuario ON ge_produto_fornecedor.id_ga_usuario = ga_usuario.id; 
 -------------------------------------------------------------------------------
 --VIEW PRODUTOS
-CREATE OR REPLACE VIEW public.vw_produtos
+CREATE OR REPLACE VIEW public.vw_ge_produtos
 AS SELECT p.codigo AS cod_produto,
-    p.descricao,
-    u.descricao AS unid_medida,
-    g.descricao AS grupo_produto,
-    p.ncm,
         CASE
             WHEN p.ativo = true THEN 'Sim'::text
             ELSE 'Não'::text
         END AS ativo,
+    p.descricao,
+    p.valor_venda,
+    p.valor_custo,
+    u.descricao AS unid_medida,
+    um.descricao as unid_massa,
+    g.descricao AS grupo_produto,
+    gs.descricao AS sub_grupo_produto,
+    l.num_lote AS num_lote_produto,
+    e.descricao AS desc_estoque_produto,
+    p.ncm,
     p.peso_bruto,
     p.peso_liquido,
     p.min_estoque,
+    p.max_estoque,
     p.criado,
     p.editado
    FROM ge_produto p
-     JOIN ge_grupo_prod g ON p.id_grupo = g.id
-     JOIN ge_unidade_medida u ON p.id_unid_medida = u.id;
+     JOIN ge_sub_grupo_prod gs ON p.id_ge_sub_grupo_prod = gs.id
+     JOIN ge_grupo_prod g ON gs.id_ge_grupo_prod = g.id
+     JOIN ge_lote l ON p.id_ge_lote = l.id
+     JOIN ge_estoque e ON p.id_ge_estoque = e.id
+     JOIN ge_unidade_medida u ON p.id_unid_medida = u.id
+     JOIN ge_unidade_massa um ON p.id_unid_massa = um.id;
 	
 --------------------------------------------------------------------------
 --  _______   _                           
