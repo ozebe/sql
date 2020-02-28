@@ -13,6 +13,7 @@
 --PRE-REQUISITOS: GA, RH
 --ga_nivel_acesso, ga_usuario, rh_endereco, rh_contato
 
+--unidade de medida, ex: UN, KG, GR, TON
 CREATE TABLE ge_unidade_medida(
 id SERIAL NOT NULL UNIQUE,
 descricao VARCHAR(255) NOT NULL UNIQUE,
@@ -21,6 +22,7 @@ editado TIMESTAMP,
 PRIMARY KEY(id)
 );
 
+--unidade de massa, ex: KG, GR, ex: tal produto possui 1kg e é vendido por un
 CREATE TABLE ge_unidade_massa(
 id SERIAL NOT NULL UNIQUE,
 descricao VARCHAR(255) NOT NULL UNIQUE,
@@ -28,8 +30,9 @@ criado TIMESTAMP NOT NULL,
 editado TIMESTAMP,
 PRIMARY KEY(id)
 );
+
 --grupos dos produtos
-CREATE TABLE ge_grupo_produto(
+CREATE TABLE ge_grupo_prod(
 id SERIAL NOT NULL UNIQUE,
 codigo VARCHAR(255) NOT NULL UNIQUE, --IM001
 descricao VARCHAR(255), --Ativo Imobilizado
@@ -38,78 +41,100 @@ editado TIMESTAMP,
 PRIMARY KEY(id)
 );
 
+--sub grupo de produto
+CREATE TABLE ge_sub_grupo_prod(
+id SERIAL NOT NULL UNIQUE,
+id_ge_grupo_prod INTEGER NOT NULL,
+codigo VARCHAR(255) NOT NULL UNIQUE, --LAN
+descricao VARCHAR(255), --Lanches
+criado TIMESTAMP NOT NULL,
+editado TIMESTAMP,
+FOREIGN KEY(id_ge_grupo_prod) REFERENCES ge_grupo_prod(id),
+PRIMARY KEY(id)
+);
 
 CREATE TABLE ge_produto(
 id SERIAL NOT NULL UNIQUE,
-codigo INTEGER NOT NULL UNIQUE,
-descricao VARCHAR(255),
+codigo INTEGER NOT NULL UNIQUE, --código de controle interno do produto
+descricao VARCHAR(255), --descrição do produto
 id_unid_medida INTEGER NOT NULL, --unidade de medida, KG, GRAMAS.
 id_unid_massa INTEGER, --unidade de medida de massa para o peso bruto e liquido
-id_grupo INTEGER NOT NULL,  --grupo do produto
-cod_barras VARCHAR(255),
+id_ge_sub_grupo_prod INTEGER NOT NULL,  --Sub grupo do produto ex: banana, frutas, alimentos.
+cod_barras VARCHAR(255), --código de barras do produto
 NCM VARCHAR(255), --para tributação
 ativo BOOLEAN NOT NULL, --ativo ou não
-peso_bruto NUMERIC(10,3),
-peso_liquido NUMERIC(10,3),
-min_estoque NUMERIC(10,3) CHECK (min_estoque >= 0) NOT NULL, 
-criado TIMESTAMP NOT NULL,
-editado TIMESTAMP,
+peso_bruto NUMERIC(10,3), --peso bruto do produto
+peso_liquido NUMERIC(10,3), --peso líquido do produto
+valor_custo NUMERIC(10,2), --valor de custo do produto
+valor_venda NUMERIC(10,2), --valor de venda do produto
+min_estoque NUMERIC(10,3) CHECK (min_estoque >= 0) NOT NULL, --mínimo em estoque do produto
+max_estoque NUMERIC(10,3), --máximo em estoque para o produto
+estoque_atual NUMERIC(10,2), --quantia em estoque atual
+criado TIMESTAMP NOT NULL, --data de inserção
+editado TIMESTAMP, --data de edição do produto
 PRIMARY KEY(id),
 FOREIGN KEY(id_unid_medida) REFERENCES ge_unidade_medida(id),
 FOREIGN KEY(id_unid_massa) REFERENCES ge_unidade_massa(id),
-FOREIGN KEY(id_grupo) REFERENCES ge_grupo_produto(id)
+FOREIGN KEY(id_ge_sub_grupo_prod) REFERENCES ge_sub_grupo_prod(id)
 );
 
-CREATE TABLE rh_fornecedor(
+CREATE TABLE ge_fornecedor(
 id SERIAL NOT NULL UNIQUE,
-razaoS VARCHAR(255) NOT NULL,
-nomeF VARCHAR(255) NOT NULL,
-contatoId INTEGER NOT NULL,
-enderecoId INTEGER NOT NULL,
-cnpj VARCHAR(14) NOT NULL UNIQUE,
-ie VARCHAR(9),
-ativo BOOLEAN NOT NULL,
-criado TIMESTAMP NOT NULL,
-editado TIMESTAMP,
-PRIMARY KEY(id),
-FOREIGN KEY (contatoId) REFERENCES rh_contato(id),
-FOREIGN KEY (enderecoId) REFERENCES rh_endereco(id)
-);
-
-CREATE TABLE ge_lote(
-id SERIAL NOT NULL UNIQUE,
-numLote VARCHAR(255) NOT NULL UNIQUE,
-descricao VARCHAR(255),
-dataValidade DATE NOT NULL,
+razao_social VARCHAR(255) NOT NULL,
+nome_fantasia VARCHAR(255) NOT NULL,
+telefone VARCHAR(20), --telefone do fornecedor
+email VARCHAR(255) UNIQUE, --email para contato do fornecedor
+end_logr VARCHAR(255), --logradouro
+end_num INTEGER, --número
+end_cep VARCHAR(10), --cep
+end_compl VARCHAR(255), --complemento
+end_bairro VARCHAR(255), --bairro
+end_localid VARCHAR(255), --localidade, cidade
+end_uf VARCHAR(2), --UF PR, SC e etc
+cnpj VARCHAR(14) UNIQUE, --cnpj do fornecedor
+ie VARCHAR(9) UNIQUE, --inscrição estadual do fornecedor
+isento_icms BOOLEAN, --fornecedor isento do icms ?
+opt_simpl_nacional BOOLEAN, --fornecedor optante pelo simples nacional ?
+ativo BOOLEAN NOT NULL, --se tal fornecedor esta ativo ou não
 criado TIMESTAMP NOT NULL,
 editado TIMESTAMP,
 PRIMARY KEY(id)
 );
 
---automatizar a inserção de dados nesse tabela
---pega o tipo de movimentacao de estoque, caso seja entrada, ele coloca o id do produto que ta entrando
---o id do fornecedor, o lote, o usuario que deu entrada, o criado é current_timestamp e o valor, ele divide a quantidade pelo valor na insercao
---do movEstoque e coloca em valor, a quantiaEstoque ele coloca do movEstoque
+CREATE TABLE ge_lote(
+id SERIAL NOT NULL UNIQUE,
+id_ge_produto INTEGER NOT NULL UNIQUE, --id do produto a qual o lote referencia
+num_lote VARCHAR(255) NOT NULL UNIQUE, --número do lote
+descricao VARCHAR(255), --descrição do lote
+data_val DATE NOT NULL, --data de validade do lote
+criado TIMESTAMP NOT NULL, --data de inserção no sistema
+editado TIMESTAMP, --data de edição no sistema
+FOREIGN KEY (id_ge_produto) REFERENCES ge_produto(id),
+PRIMARY KEY(id)
+);
+
+--também cria-se um registo quando a movimentação de estoque é do tipo entrada e é selecionado o fornecedor
 CREATE TABLE ge_produto_fornecedor(
 id SERIAL NOT NULL UNIQUE,
-idProduto INTEGER NOT NULL,
-idFornecedor INTEGER NOT NULL,
-quantiaEstoque NUMERIC(10,3) NOT NULL,
-valor_custo NUMERIC(10,2),
-valor_venda NUMERIC(10,2),
-idLote INTEGER NOT NULL,
-idUsuario INTEGER NOT NULL,
-criado TIMESTAMP NOT NULL,
-editado TIMESTAMP,
+id_ge_prod INTEGER NOT NULL, --id do produto em questão
+id_ge_fornecedor INTEGER NOT NULL, --id do fornecedor de tal produto
+quantia_estoque NUMERIC(10,3) CHECK (quantia_estoque >= 0) NOT NULL, --quantia em estoque atual do produto de tal fornecedor
+valor_custo NUMERIC(10,2), --valor de custo do produto, caso não tenha pegará o val_total/quantia na entrada de movimentação de estoque
+valor_venda NUMERIC(10,2), --valor de venda do produto
+id_ge_lote INTEGER NOT NULL, --id do lote, apenas obrigatório o controle quando vem de um fornecedor especifico
+id_ga_usuario INTEGER NOT NULL, --id do usuário que realizou a inserção no sistema
+criado TIMESTAMP NOT NULL, --data da inserção no sistema
+editado TIMESTAMP, --data da edição no sistema
 --info a mais
 PRIMARY KEY(id),
-FOREIGN KEY(idLote) REFERENCES ge_lote(id),
-FOREIGN KEY(idProduto) REFERENCES ge_produto(id),
-FOREIGN KEY(idFornecedor) REFERENCES rh_fornecedor(id),
-FOREIGN KEY(idUsuario) REFERENCES ga_usuario(id)
+FOREIGN KEY(id_ge_lote) REFERENCES ge_lote(id),
+FOREIGN KEY(id_ge_prod) REFERENCES ge_produto(id),
+FOREIGN KEY(id_ge_fornecedor) REFERENCES ge_fornecedor(id),
+FOREIGN KEY(id_ga_usuario) REFERENCES ga_usuario(id)
 );
 
 --Operações de estoque (Ajuste e etc) movimentações-------------------
+--localizações de estoque
 CREATE TABLE ge_estoque(
 id SERIAL NOT NULL UNIQUE,
 descricao VARCHAR(255) NOT NULL,
@@ -119,40 +144,42 @@ editado TIMESTAMP,
 PRIMARY KEY(id)
 );
 
-
+--operações de estoque, ex: Entrada, compra de produtos
 CREATE TABLE ge_op_estoque(
 id SERIAL NOT NULL UNIQUE,
-descricao VARCHAR(255) NOT NULL,
+descricao VARCHAR(255) NOT NULL, --descrição da operação de estoque, ex: compra de produtos
 tipo VARCHAR(7) CHECK (tipo IN ('Entrada', 'Saida', 'Ajuste')) NOT NULL, 
-ativo BOOLEAN NOT NULL,
+ativo BOOLEAN NOT NULL, --produto ativo ?
 criado TIMESTAMP NOT NULL,
 editado TIMESTAMP,
 PRIMARY KEY(id)
 );
 
-
+--alterar essa tabela para deixar incluir um produto sem os dados do fornecedor
 CREATE TABLE ge_mov_estoque(
 id SERIAL NOT NULL UNIQUE,
-idProduto INTEGER NOT NULL,
-idOpEstoque INTEGER NOT NULL,
-idEstoque INTEGER NOT NULL,
-idLote INTEGER,
-nNotaF VARCHAR(255),
-idFornecedor INTEGER NOT NULL,
-dataMov TIMESTAMP NOT NULL,
-quantidade NUMERIC(10,3) NOT NULL,
-valorTotal NUMERIC(10,2),
-idUsuario INTEGER NOT NULL,
-criado TIMESTAMP NOT NULL,
-editado TIMESTAMP,
+id_ge_prod INTEGER NOT NULL, --id do produto
+id_ge_op_estoque INTEGER NOT NULL, --id do tipo de movimentação de estoque
+id_ge_estoque INTEGER NOT NULL, --id do estoque 
+id_ge_lote INTEGER, --id do lote, opcional, pois pode-se dar entrada manualmente em produtos
+num_nota_fiscal VARCHAR(255), --numero da nota fiscal, também opcional
+id_ge_fornecedor INTEGER, --id do fornecedor, caso colocado, a movimentação de estoque ira colocar tal produto em ge_produto_fornecedor
+data_mov DATE NOT NULL, --data de realização da movimentação
+quantidade NUMERIC(10,3) NOT NULL, --quantia movimentada, lembrando que é da unidade de medida especifica do produto em questão
+val_total NUMERIC(10,2), --valor total da movimentação do estoque
+id_ga_usuario INTEGER NOT NULL, --id do usuario que realizou a movimentação de estoque
+criado TIMESTAMP NOT NULL, --data de criação da movimentação
+editado TIMESTAMP, --data de edição da movimentação
 PRIMARY KEY(id),
-FOREIGN KEY(idProduto) REFERENCES ge_produto(id),
-FOREIGN KEY(idLote) REFERENCES ge_lote(id),
-FOREIGN KEY(idUsuario) REFERENCES ga_usuario(id),
-FOREIGN KEY(idOpEstoque) REFERENCES ge_op_estoque(id),
-FOREIGN KEY(idEstoque) REFERENCES ge_estoque(id),
-FOREIGN KEY(idFornecedor) REFERENCES rh_fornecedor(id)
+FOREIGN KEY(id_ge_prod) REFERENCES ge_produto(id),
+FOREIGN KEY(id_ge_lote) REFERENCES ge_lote(id),
+FOREIGN KEY(id_ga_usuario) REFERENCES ga_usuario(id),
+FOREIGN KEY(id_ge_op_estoque) REFERENCES ge_op_estoque(id),
+FOREIGN KEY(id_ge_estoque) REFERENCES ge_estoque(id),
+FOREIGN KEY(id_ge_fornecedor) REFERENCES ge_fornecedor(id)
 );
+
+
 
 --Big Money-sw
 --------------------------------------------------------------------------
@@ -165,27 +192,34 @@ FOREIGN KEY(idFornecedor) REFERENCES rh_fornecedor(id)
 --------------------------------------------------------------------------
 --VIEW FORNECEDORES
 CREATE OR REPLACE VIEW public.vw_fornecedores
-AS SELECT f.razaos AS razao_social,
-    f.nomef AS nome_fantasia,
-    concat(c.ddd, c.telefone) AS telefone,
-    c.email,
-    e.logradouro AS rua,
-    e.numero,
-    e.cep,
-    e.bairro,
-    e.localidade AS cidade,
-    e.uf AS estado,
+AS SELECT f.razao_social,
+    f.nome_fantasia,
+    f.telefone,
+    f.email,
+    f.end_logr AS rua,
+    f.end_num AS num_rua,
+    f.end_cep AS cep,
+    f.end_bairro AS bairro,
+    f.end_localid AS cidade,
+    f.end_compl as complemento,
+    f.end_uf AS estado,
     f.cnpj,
     f.ie,
         CASE
             WHEN f.ativo = true THEN 'Sim'::text
             ELSE 'Não'::text
         END AS ativo,
+        CASE
+        	WHEN f.isento_icms = true THEN 'Sim'::text
+        	ELSE 'Não'::text
+        END AS isento_icms,
+                case
+        	WHEN f.opt_simpl_nacional = true THEN 'Sim'::text
+        	ELSE 'Não'::text
+        END AS opt_simpl_nacional,
     f.criado,
     f.editado
-   FROM rh_fornecedor f
-     JOIN rh_contato c ON f.contatoid = c.id
-     JOIN rh_endereco e ON f.enderecoid = e.id;
+   FROM ge_fornecedor f
 -------------------------------------------------------------------------------
 --VIEW MOVIMENTACOES DE ESTOQUE quantiade, valor
 CREATE OR REPLACE VIEW public.vw_movs_estoque
@@ -195,28 +229,29 @@ AS SELECT ge_mov_estoque.id AS id_mov_estoque,
 	ope.descricao AS operacao_estoque,
 	ge_mov_estoque.quantidade,
 	um.descricao AS unid_medida,
-    ge_mov_estoque.valorTotal,
+    ge_mov_estoque.val_total,
 	p.cod_barras AS cod_barras_produto,
     ge_estoque.descricao AS nome_estoque,
-    ge_lote.numlote AS numero_lote_prod,
-    ge_mov_estoque.nnotaf AS num_nota_fiscal,
-    rh_fornecedor.razaos AS razao_social_fornecedor,
-    ge_mov_estoque.datamov AS data_da_movimentacao,
+    ge_lote.num_lote AS numero_lote_prod,
+    ge_mov_estoque.num_nota_fiscal AS num_nota_fiscal,
+    ge_fornecedor.razao_social AS razao_social_fornecedor,
+    ge_mov_estoque.data_mov  AS data_da_movimentacao,
     ga_usuario.nome AS usuario_que_movimentou
    FROM ge_mov_estoque
-     JOIN ge_produto p ON ge_mov_estoque.idproduto = p.id
+     JOIN ge_produto p ON ge_mov_estoque.id_ge_prod = p.id
 	 JOIN ge_unidade_medida um ON p.id_unid_medida = um.id
-     JOIN ge_op_estoque ope ON ge_mov_estoque.idopestoque = ope.id
-     JOIN ge_estoque ON ge_mov_estoque.idestoque = ge_estoque.id
-     JOIN ge_lote ON ge_mov_estoque.idlote = ge_lote.id
-     JOIN rh_fornecedor ON ge_mov_estoque.idfornecedor = rh_fornecedor.id
-     JOIN ga_usuario ON ge_mov_estoque.idusuario = ga_usuario.id;	 
+     JOIN ge_op_estoque ope ON ge_mov_estoque.id_ge_op_estoque = ope.id
+     JOIN ge_estoque ON ge_mov_estoque.id_ge_estoque = ge_estoque.id
+     JOIN ge_lote ON ge_mov_estoque.id_ge_lote = ge_lote.id
+     JOIN ge_fornecedor ON ge_mov_estoque.id_ge_fornecedor = ge_fornecedor.id
+     JOIN ga_usuario ON ge_mov_estoque.id_ga_usuario = ga_usuario.id; 
 -------------------------------------------------------------------------------
+--corrigir views e triggers
 --VIEW PRODUTOS E RESPECTIVOS FORNECEDORES
  CREATE OR REPLACE VIEW public.vw_produto_fornecedor
-AS SELECT rh_fornecedor.id AS id_fornecedor,
-	rh_fornecedor.razaos AS razao_social_fornecedor,
-    rh_fornecedor.cnpj,
+AS SELECT ge_fornecedor.id AS id_fornecedor,
+	ge_fornecedor.razaos AS razao_social_fornecedor,
+    ge_fornecedor.cnpj,
 	p.id AS id_produto,
     p.descricao AS desc_produto,
     p.cod_barras AS cod_barras_produto,
@@ -233,7 +268,7 @@ AS SELECT rh_fornecedor.id AS id_fornecedor,
      JOIN ge_produto p ON ge_produto_fornecedor.idproduto = p.id
      JOIN ge_unidade_medida um ON p.id_unid_medida = um.id
      JOIN ge_lote ON ge_produto_fornecedor.idlote = ge_lote.id
-     JOIN rh_fornecedor ON ge_produto_fornecedor.idfornecedor = rh_fornecedor.id
+     JOIN ge_fornecedor ON ge_produto_fornecedor.idfornecedor = ge_fornecedor.id
      JOIN ga_usuario ON ge_produto_fornecedor.idusuario = ga_usuario.id; 
 -------------------------------------------------------------------------------
 --VIEW PRODUTOS
@@ -253,7 +288,7 @@ AS SELECT p.codigo AS cod_produto,
     p.criado,
     p.editado
    FROM ge_produto p
-     JOIN ge_grupo_produto g ON p.id_grupo = g.id
+     JOIN ge_grupo_prod g ON p.id_grupo = g.id
      JOIN ge_unidade_medida u ON p.id_unid_medida = u.id;
 	
 --------------------------------------------------------------------------
