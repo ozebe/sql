@@ -53,28 +53,53 @@ FOREIGN KEY(id_ge_grupo_prod) REFERENCES ge_grupo_prod(id),
 PRIMARY KEY(id)
 );
 
+--localizações de estoque
+CREATE TABLE ge_estoque(
+id SERIAL NOT NULL UNIQUE,
+descricao VARCHAR(255) NOT NULL,
+ativo BOOLEAN NOT NULL,
+criado TIMESTAMP NOT NULL,
+editado TIMESTAMP,
+PRIMARY KEY(id)
+);
+
+--lotes de produtos
+CREATE TABLE ge_lote(
+id SERIAL NOT NULL UNIQUE,
+num_lote VARCHAR(255) NOT NULL UNIQUE, --número do lote
+descricao VARCHAR(255), --descrição do lote
+data_val DATE NOT NULL, --data de validade do lote
+criado TIMESTAMP NOT NULL, --data de inserção no sistema
+editado TIMESTAMP, --data de edição no sistema
+PRIMARY KEY(id)
+);
+
 CREATE TABLE ge_produto(
 id SERIAL NOT NULL UNIQUE,
-codigo INTEGER NOT NULL UNIQUE, --código de controle interno do produto
+codigo VARCHAR(30) NOT NULL UNIQUE, --código de controle interno do produto
 descricao VARCHAR(255), --descrição do produto
 id_unid_medida INTEGER NOT NULL, --unidade de medida, KG, GRAMAS.
 id_unid_massa INTEGER, --unidade de medida de massa para o peso bruto e liquido
 id_ge_sub_grupo_prod INTEGER NOT NULL,  --Sub grupo do produto ex: banana, frutas, alimentos.
+id_ge_estoque INTEGER, --id do estoque a qual o produto se encontra
 cod_barras VARCHAR(255), --código de barras do produto
 NCM VARCHAR(255), --para tributação
 ativo BOOLEAN NOT NULL, --ativo ou não
 peso_bruto NUMERIC(10,3), --peso bruto do produto
 peso_liquido NUMERIC(10,3), --peso líquido do produto
+id_ge_lote INTEGER, --id do lote
 valor_custo NUMERIC(10,2), --valor de custo do produto
 valor_venda NUMERIC(10,2), --valor de venda do produto
 min_estoque NUMERIC(10,3) CHECK (min_estoque >= 0) NOT NULL, --mínimo em estoque do produto
-max_estoque NUMERIC(10,3), --máximo em estoque para o produto
+max_estoque NUMERIC(10,3) CHECK (max_estoque >= min_estoque), --máximo em estoque para o produto
 estoque_atual NUMERIC(10,2), --quantia em estoque atual
 criado TIMESTAMP NOT NULL, --data de inserção
 editado TIMESTAMP, --data de edição do produto
 PRIMARY KEY(id),
 FOREIGN KEY(id_unid_medida) REFERENCES ge_unidade_medida(id),
 FOREIGN KEY(id_unid_massa) REFERENCES ge_unidade_massa(id),
+FOREIGN KEY(id_ge_estoque) REFERENCES ge_estoque(id),
+FOREIGN KEY(id_ge_lote) REFERENCES ge_lote(id),
 FOREIGN KEY(id_ge_sub_grupo_prod) REFERENCES ge_sub_grupo_prod(id)
 );
 
@@ -101,18 +126,6 @@ editado TIMESTAMP,
 PRIMARY KEY(id)
 );
 
-CREATE TABLE ge_lote(
-id SERIAL NOT NULL UNIQUE,
-id_ge_produto INTEGER NOT NULL UNIQUE, --id do produto a qual o lote referencia
-num_lote VARCHAR(255) NOT NULL UNIQUE, --número do lote
-descricao VARCHAR(255), --descrição do lote
-data_val DATE NOT NULL, --data de validade do lote
-criado TIMESTAMP NOT NULL, --data de inserção no sistema
-editado TIMESTAMP, --data de edição no sistema
-FOREIGN KEY (id_ge_produto) REFERENCES ge_produto(id),
-PRIMARY KEY(id)
-);
-
 --também cria-se um registo quando a movimentação de estoque é do tipo entrada e é selecionado o fornecedor
 CREATE TABLE ge_produto_fornecedor(
 id SERIAL NOT NULL UNIQUE,
@@ -121,7 +134,8 @@ id_ge_fornecedor INTEGER NOT NULL, --id do fornecedor de tal produto
 quantia_estoque NUMERIC(10,3) CHECK (quantia_estoque >= 0) NOT NULL, --quantia em estoque atual do produto de tal fornecedor
 valor_custo NUMERIC(10,2), --valor de custo do produto, caso não tenha pegará o val_total/quantia na entrada de movimentação de estoque
 valor_venda NUMERIC(10,2), --valor de venda do produto
-id_ge_lote INTEGER NOT NULL, --id do lote, apenas obrigatório o controle quando vem de um fornecedor especifico
+id_ge_lote INTEGER, --id do lote
+id_ge_estoque INTEGER, --id do estoque a qual o produto se encontra
 id_ga_usuario INTEGER NOT NULL, --id do usuário que realizou a inserção no sistema
 criado TIMESTAMP NOT NULL, --data da inserção no sistema
 editado TIMESTAMP, --data da edição no sistema
@@ -130,20 +144,11 @@ PRIMARY KEY(id),
 FOREIGN KEY(id_ge_lote) REFERENCES ge_lote(id),
 FOREIGN KEY(id_ge_prod) REFERENCES ge_produto(id),
 FOREIGN KEY(id_ge_fornecedor) REFERENCES ge_fornecedor(id),
+FOREIGN KEY(id_ge_estoque) REFERENCES ge_estoque(id),
 FOREIGN KEY(id_ga_usuario) REFERENCES ga_usuario(id)
 );
 
 --Operações de estoque (Ajuste e etc) movimentações-------------------
---localizações de estoque
-CREATE TABLE ge_estoque(
-id SERIAL NOT NULL UNIQUE,
-descricao VARCHAR(255) NOT NULL,
-ativo BOOLEAN NOT NULL,
-criado TIMESTAMP NOT NULL,
-editado TIMESTAMP,
-PRIMARY KEY(id)
-);
-
 --operações de estoque, ex: Entrada, compra de produtos
 CREATE TABLE ge_op_estoque(
 id SERIAL NOT NULL UNIQUE,
