@@ -19,11 +19,11 @@ Estrutura de banco de dados composta por módulos, como módulos de gestão de a
 Cada arquivo possui tudo que é necessário para a configuração inicial, tanto suas views e seus triggers.
 Caso queira algum módulo especifico, como gestão de acesso, RH ou algo do tipo, é necessário abrir cada módulo e verificar a parte de "requisitos" e executar os arquivos ou módulos dos requisitos. Lembrando que marcações de commit betas ou alfas não devem ser utilizados em produção, apenas para testes e adequações.
 
-#### Nomenclatura de tabelas, views e triggers
+#### Nomenclatura de tabelas, views, triggers funções e etc.
 
-**views são identificadas por vw_xxxxxx_xxxxx**
-**Triggers são identificados por trg_xxxxxx_xxxxx**
-**Funções são identificadas por fn_xxxxxx_xxxxx**
+- **Views são identificadas por vw_xxxxxx_xxxxx**
+- **Triggers são identificados por trg_xxxxxx_xxxxx**
+- **Funções são identificadas por fn_xxxxxx_xxxxx**
 
 **Nomes das Tabelas**
 
