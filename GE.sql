@@ -458,7 +458,7 @@ IF ge_produto_ativo = true THEN --se o produto estiver ativo
 					END IF;
 				END IF;
 			ELSIF tp_ge_op_estoque = 'Saida' THEN --caso a movimentação seja de saida
-			
+				
 			ELSE --caso a movimentação não seja de entrada ou de saida
 				
 			END IF; 
@@ -479,7 +479,7 @@ RETURN NEW;
 END;
 $fn_verifica_ge_movs_estoque$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_verif_movs_entra
+CREATE TRIGGER trg_verif_movs
 	BEFORE INSERT ON ge_mov_estoque 
 		FOR EACH ROW EXECUTE PROCEDURE fn_verifica_ge_movs_estoque();
 ----------------------------------------------------------------------------------------------
