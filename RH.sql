@@ -139,7 +139,6 @@ FOREIGN KEY (id_jornada_trabalho) REFERENCES jornada_trabalho(id)
 
 CREATE TABLE rh_dependente(
 id SERIAL NOT NULL UNIQUE,
-id_funcionario INTEGER NOT NULL,
 nome VARCHAR(255),
 cpf VARCHAR(11) NOT NULL,
 data_nasc DATE NOT NULL,
@@ -147,5 +146,16 @@ grau_parentesco VARCHAR(255),
 criado TIMESTAMP NOT NULL,
 editado TIMESTAMP,
 PRIMARY KEY(id),
-FOREIGN KEY(id_funcionario) REFERENCES funcionario(id)
+);
+
+CREATE TABLE rh_funcionario_dependente(
+id SERIAL NOT NULL UNIQUE,
+id_rh_funcionario INTEGER NOT NULL,
+id_rh_dependente INTEGER NOR NULL,
+obs_adicionais VARCHAR(255),
+criado TIMESTAMP NOT NULL,
+editado TIMESTAMP,
+PRIMARY KEY(id),
+FOREIGN KEY(id_rh_dependente) REFERENCES rh_dependente(id),
+FOREIGN KEY(id_rh_funcionario) REFERENCES rh_funcionario(id)
 );
