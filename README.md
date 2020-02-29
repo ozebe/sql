@@ -22,11 +22,12 @@ Caso queira algum módulo especifico, como gestão de acesso, RH ou algo do tipo
 #### Nomenclatura de tabelas, views e triggers
 
 **views são identificadas por vw_xxxxxx_xxxxx**
-
+**Triggers são identificados por trg_xxxxxx_xxxxx**
+**Funções são identificadas por fn_xxxxxx_xxxxx**
 
 **Nomes das Tabelas**
 
-**rh_xxxxxx_xxxxx** : * são tabelas destinadas á recursos humanos, nelas possuem pessoas físicas, funcionários, fornecedores e etc.*
+**rh_xxxxxx_xxxxx** : *São tabelas destinadas á recursos humanos, nelas possuem pessoas físicas, funcionários, fornecedores e etc.*
 
 **ge_xxxxxx_xxxxx** : *São tabelas destinadas á gestão do estoque, contendo, estoque, grupo de produto, lote, movimentação de estoque, operação de estoque, produto, unidade de medida e etc.*
 
@@ -38,9 +39,7 @@ Caso queira algum módulo especifico, como gestão de acesso, RH ou algo do tipo
 
 **ma_xxxxxx_xxxxx** :  *São tabelas de miscelanea como agenda e etc*
 
-## Exemplos de uso
-
-Em breve.
+## Exemplos de uso e cadastros
 
 _Para mais informações visualize a [Wiki][wiki]._
 
