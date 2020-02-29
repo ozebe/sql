@@ -21,7 +21,7 @@ PRIMARY KEY(id)
 
 CREATE TABLE rh_situacao_escolar(
 id SERIAL NOT NULL UNIQUE,
-descricao VARCHAR(255),
+descricao VARCHAR(255) NOT NULL,
 criado TIMESTAMP NOT NULL,
 editado TIMESTAMP,
 PRIMARY key(id)
@@ -134,7 +134,7 @@ obs VARCHAR(255), --observações adicionais do funcionario
 PRIMARY KEY(id),
 FOREIGN KEY (rh_tp_prof_id) REFERENCES rh_tipo_profissao(id),
 FOREIGN KEY (id_rh_pessoa_fis) REFERENCES rh_pessoa_fisica(id),
-FOREIGN KEY (id_jornada_trabalho) REFERENCES jornada_trabalho(id)
+FOREIGN KEY (id_jornada_trabalho) REFERENCES rh_jornada_trabalho(id)
 );
 
 CREATE TABLE rh_dependente(
@@ -145,13 +145,13 @@ data_nasc DATE NOT NULL,
 grau_parentesco VARCHAR(255),
 criado TIMESTAMP NOT NULL,
 editado TIMESTAMP,
-PRIMARY KEY(id),
+PRIMARY KEY(id)
 );
 
 CREATE TABLE rh_funcionario_dependente(
 id SERIAL NOT NULL UNIQUE,
 id_rh_funcionario INTEGER NOT NULL,
-id_rh_dependente INTEGER NOR NULL,
+id_rh_dependente INTEGER NOT NULL,
 obs_adicionais VARCHAR(255),
 criado TIMESTAMP NOT NULL,
 editado TIMESTAMP,
