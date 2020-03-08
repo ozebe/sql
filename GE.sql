@@ -10,8 +10,8 @@
 
 --ge_xxxxxx_xxxxx
 --São tabelas destinadas á gestão do estoque, contendo, estoque, grupo de produto, lote, movimentação de estoque, operação de estoque, produto, unidade de --medida e etc
---PRE-REQUISITOS: GA, RH
---ga_nivel_acesso, ga_usuario, rh_endereco, rh_contato
+--PRE-REQUISITOS: GA, GF
+--ga_nivel_acesso, ga_usuario, gf_fornecedor
 
 --unidade de medida, ex: UN, KG, GR, TON
 CREATE TABLE ge_unidade_medida(
@@ -107,34 +107,11 @@ FOREIGN KEY(id_ge_lote) REFERENCES ge_lote(id),
 FOREIGN KEY(id_ge_sub_grupo_prod) REFERENCES ge_sub_grupo_prod(id)
 );
 
-CREATE TABLE ge_fornecedor(
-id SERIAL NOT NULL UNIQUE,
-razao_social VARCHAR(255) NOT NULL,
-nome_fantasia VARCHAR(255) NOT NULL,
-telefone VARCHAR(20), --telefone do fornecedor
-email VARCHAR(255) UNIQUE, --email para contato do fornecedor
-end_logr VARCHAR(255), --logradouro
-end_num INTEGER, --número
-end_cep VARCHAR(10), --cep
-end_compl VARCHAR(255), --complemento
-end_bairro VARCHAR(255), --bairro
-end_localid VARCHAR(255), --localidade, cidade
-end_uf VARCHAR(2), --UF PR, SC e etc
-cnpj VARCHAR(14) UNIQUE, --cnpj do fornecedor
-ie VARCHAR(9) UNIQUE, --inscrição estadual do fornecedor
-isento_icms BOOLEAN, --fornecedor isento do icms ?
-opt_simpl_nacional BOOLEAN, --fornecedor optante pelo simples nacional ?
-ativo BOOLEAN NOT NULL, --se tal fornecedor esta ativo ou não
-criado TIMESTAMP NOT NULL,
-editado TIMESTAMP,
-PRIMARY KEY(id)
-);
-
 --também cria-se um registo quando a movimentação de estoque é do tipo entrada e é selecionado o fornecedor
 CREATE TABLE ge_produto_fornecedor(
 id SERIAL NOT NULL UNIQUE,
 id_ge_prod INTEGER NOT NULL, --id do produto em questão
-id_ge_fornecedor INTEGER NOT NULL, --id do fornecedor de tal produto
+id_gf_fornecedor INTEGER NOT NULL, --id do fornecedor de tal produto
 quantia_estoque NUMERIC(10,3) CHECK (quantia_estoque >= 0) NOT NULL, --quantia em estoque atual do produto de tal fornecedor
 valor_custo NUMERIC(10,2), --valor de custo do produto, caso não tenha pegará o val_total/quantia na entrada de movimentação de estoque
 valor_venda NUMERIC(10,2), --valor de venda do produto
@@ -147,7 +124,7 @@ editado TIMESTAMP, --data da edição no sistema
 PRIMARY KEY(id),
 FOREIGN KEY(id_ge_lote) REFERENCES ge_lote(id),
 FOREIGN KEY(id_ge_prod) REFERENCES ge_produto(id),
-FOREIGN KEY(id_ge_fornecedor) REFERENCES ge_fornecedor(id),
+FOREIGN KEY(id_gf_fornecedor) REFERENCES gf_fornecedor(id),
 FOREIGN KEY(id_ge_estoque) REFERENCES ge_estoque(id),
 FOREIGN KEY(id_ga_usuario) REFERENCES ga_usuario(id)
 );
@@ -172,7 +149,7 @@ id_ge_op_estoque INTEGER NOT NULL, --id do tipo de movimentação de estoque
 id_ge_estoque INTEGER NOT NULL, --id do estoque 
 id_ge_lote INTEGER, --id do lote, opcional, pois pode-se dar entrada manualmente em produtos
 num_nota_fiscal VARCHAR(255), --numero da nota fiscal, também opcional
-id_ge_fornecedor INTEGER, --id do fornecedor, caso colocado, a movimentação de estoque ira colocar tal produto em ge_produto_fornecedor
+id_gf_fornecedor INTEGER, --id do fornecedor, caso colocado, a movimentação de estoque ira colocar tal produto em ge_produto_fornecedor
 data_mov DATE NOT NULL, --data de realização da movimentação
 quantidade NUMERIC(10,3) NOT NULL, --quantia movimentada, lembrando que é da unidade de medida especifica do produto em questão
 val_total NUMERIC(10,2), --valor total da movimentação do estoque
@@ -185,7 +162,7 @@ FOREIGN KEY(id_ge_lote) REFERENCES ge_lote(id),
 FOREIGN KEY(id_ga_usuario) REFERENCES ga_usuario(id),
 FOREIGN KEY(id_ge_op_estoque) REFERENCES ge_op_estoque(id),
 FOREIGN KEY(id_ge_estoque) REFERENCES ge_estoque(id),
-FOREIGN KEY(id_ge_fornecedor) REFERENCES ge_fornecedor(id)
+FOREIGN KEY(id_gf_fornecedor) REFERENCES gf_fornecedor(id)
 );
 
 
@@ -228,7 +205,7 @@ AS SELECT f.razao_social,
         END AS opt_simpl_nacional,
     f.criado,
     f.editado
-   FROM ge_fornecedor f
+   FROM gf_fornecedor f
 -------------------------------------------------------------------------------
 --VIEW MOVIMENTACOES DE ESTOQUE quantiade, valor
 CREATE OR REPLACE VIEW public.vw_ge_movs_estoque
@@ -244,7 +221,7 @@ AS SELECT ge_mov_estoque.id AS id_mov_estoque,
     ge_estoque.descricao AS nome_estoque,
     ge_lote.num_lote AS numero_lote_prod,
     ge_mov_estoque.num_nota_fiscal AS num_nota_fiscal,
-    ge_fornecedor.razao_social AS razao_social_fornecedor,
+    gf_fornecedor.razao_social AS razao_social_fornecedor,
     ge_mov_estoque.data_mov  AS data_da_movimentacao,
     ga_usuario.nome AS usuario_que_movimentou
    FROM ge_mov_estoque
@@ -253,15 +230,15 @@ AS SELECT ge_mov_estoque.id AS id_mov_estoque,
      JOIN ge_op_estoque ope ON ge_mov_estoque.id_ge_op_estoque = ope.id
      JOIN ge_estoque ON ge_mov_estoque.id_ge_estoque = ge_estoque.id
      LEFT JOIN ge_lote ON ge_mov_estoque.id_ge_lote = ge_lote.id
-     LEFT JOIN ge_fornecedor ON ge_mov_estoque.id_ge_fornecedor = ge_fornecedor.id
+     LEFT JOIN gf_fornecedor ON ge_mov_estoque.id_gf_fornecedor = gf_fornecedor.id
      JOIN ga_usuario ON ge_mov_estoque.id_ga_usuario = ga_usuario.id; 
 -------------------------------------------------------------------------------
 --corrigir views e triggers
 --VIEW PRODUTOS E RESPECTIVOS FORNECEDORES
  CREATE OR REPLACE VIEW public.vw_ge_produto_fornecedor
-AS SELECT ge_fornecedor.id AS id_fornecedor,
-	ge_fornecedor.razao_social AS razao_social_fornecedor,
-    ge_fornecedor.cnpj,
+AS SELECT gf_fornecedor.id AS id_fornecedor,
+	gf_fornecedor.razao_social AS razao_social_fornecedor,
+    gf_fornecedor.cnpj,
 	p.codigo AS cod_produto,
     p.descricao AS desc_produto,
     p.cod_barras AS cod_barras_produto,
@@ -279,7 +256,7 @@ AS SELECT ge_fornecedor.id AS id_fornecedor,
      JOIN ge_produto p ON ge_produto_fornecedor.id_ge_prod = p.id
      JOIN ge_unidade_medida um ON p.id_unid_medida = um.id
      LEFT JOIN ge_lote ON ge_produto_fornecedor.id_ge_lote = ge_lote.id
-     JOIN ge_fornecedor ON ge_produto_fornecedor.id_ge_fornecedor = ge_fornecedor.id
+     JOIN gf_fornecedor ON ge_produto_fornecedor.id_gf_fornecedor = gf_fornecedor.id
      JOIN ga_usuario ON ge_produto_fornecedor.id_ga_usuario = ga_usuario.id; 
 -------------------------------------------------------------------------------
 --VIEW PRODUTOS
@@ -336,17 +313,17 @@ DECLARE
 	ge_op_estoque_ativo BOOLEAN := (SELECT op.ativo FROM ge_op_estoque op WHERE op.id = NEW.id_ge_op_estoque); --operação de estoque ativa?
 	ge_estoque_ativo BOOLEAN := (SELECT e.ativo FROM ge_estoque e WHERE e.id = NEW.id_ge_estoque); --estoque ativo ?
 	validade_lote DATE := (SELECT l.data_val FROM ge_lote l WHERE l.id = NEW.id_ge_lote); --data de validade do lote inserido 
-	ge_fornecedor_ativo BOOLEAN := (SELECT f.ativo FROM ge_fornecedor f WHERE f.id = NEW.id_ge_fornecedor); --fornecedor ativo ?
+	ge_fornecedor_ativo BOOLEAN := (SELECT f.ativo FROM gf_fornecedor f WHERE f.id = NEW.id_gf_fornecedor); --fornecedor ativo ?
 	tp_ge_op_estoque VARCHAR := (SELECT o.tipo FROM ge_op_estoque o WHERE o.id = NEW.id_ge_op_estoque); --verifica o tipo da operação de estoque
 	
 	--quantia atual do produto por tal fornecedor, sem lote.
-	qtd_atual_prod_f NUMERIC(10,3) := (SELECT pf.quantia_estoque FROM ge_produto_fornecedor AS pf WHERE id_ge_prod = NEW.id_ge_prod AND id_ge_fornecedor = NEW.id_ge_fornecedor);
+	qtd_atual_prod_f NUMERIC(10,3) := (SELECT pf.quantia_estoque FROM ge_produto_fornecedor AS pf WHERE id_ge_prod = NEW.id_ge_prod AND id_gf_fornecedor = NEW.id_gf_fornecedor);
 	
 	--quantia atual do produto de tal fornecedor por tal lote
-	qtd_atual_prod_f_l NUMERIC(10,3) := (SELECT pf.quantia_estoque FROM ge_produto_fornecedor AS pf WHERE id_ge_prod = NEW.id_ge_prod AND id_ge_fornecedor = NEW.id_ge_fornecedor AND id_ge_lote = NEW.id_ge_lote);
+	qtd_atual_prod_f_l NUMERIC(10,3) := (SELECT pf.quantia_estoque FROM ge_produto_fornecedor AS pf WHERE id_ge_prod = NEW.id_ge_prod AND id_gf_fornecedor = NEW.id_gf_fornecedor AND id_ge_lote = NEW.id_ge_lote);
 	
 	--quantia atual do produto de tal fornecedor por tal lote e tal estoque
-	qtd_atual_prod_f_l_e NUMERIC(10,3) := (SELECT pf.quantia_estoque FROM ge_produto_fornecedor AS pf WHERE id_ge_prod = NEW.id_ge_prod AND id_ge_fornecedor = NEW.id_ge_fornecedor AND id_ge_lote = NEW.id_ge_lote AND id_ge_estoque = NEW.id_ge_estoque);
+	qtd_atual_prod_f_l_e NUMERIC(10,3) := (SELECT pf.quantia_estoque FROM ge_produto_fornecedor AS pf WHERE id_ge_prod = NEW.id_ge_prod AND id_gf_fornecedor = NEW.id_gf_fornecedor AND id_ge_lote = NEW.id_ge_lote AND id_ge_estoque = NEW.id_ge_estoque);
 	
 	--quantia atual do produto, ignorando lote, fornecedor e estoque
 	qtd_atual_prod NUMERIC(10,3) := (SELECT p.quantia_estoque FROM ge_produto p WHERE p.id = NEW.id_ge_prod);
@@ -361,13 +338,13 @@ DECLARE
 	qtd_max_estoq_prod_l NUMERIC(10,3) := (SELECT p.max_estoque FROM ge_produto p WHERE p.id = NEW.id_ge_prod AND p.id_ge_lote = NEW.id_ge_lote);
 	
 	--quantia maxima em estoque do produto, por fornecedor, sem lote
-	qtd_max_estoq_prod_f NUMERIC (10,3) := (SELECT p.max_estoque FROM ge_produto p WHERE p.id = (SELECT pf.id_ge_prod FROM ge_produto_fornecedor AS pf WHERE id_ge_prod = NEW.id_ge_prod AND id_ge_fornecedor = NEW.id_ge_fornecedor));
+	qtd_max_estoq_prod_f NUMERIC (10,3) := (SELECT p.max_estoque FROM ge_produto p WHERE p.id = (SELECT pf.id_ge_prod FROM ge_produto_fornecedor AS pf WHERE id_ge_prod = NEW.id_ge_prod AND id_gf_fornecedor = NEW.id_gf_fornecedor));
 	
 	--quantia em estoque do produto, por fornecedor e lote
-	qtd_max_estoq_prod_f_l NUMERIC(10,3) := (SELECT p.max_estoque FROM ge_produto p WHERE p.id = (SELECT pf.id_ge_prod FROM ge_produto_fornecedor AS pf WHERE id_ge_prod = NEW.id_ge_prod AND id_ge_fornecedor = NEW.id_ge_fornecedor AND id_ge_lote = NEW.id_ge_lote));
+	qtd_max_estoq_prod_f_l NUMERIC(10,3) := (SELECT p.max_estoque FROM ge_produto p WHERE p.id = (SELECT pf.id_ge_prod FROM ge_produto_fornecedor AS pf WHERE id_ge_prod = NEW.id_ge_prod AND id_gf_fornecedor = NEW.id_gf_fornecedor AND id_ge_lote = NEW.id_ge_lote));
 	
 	--quantia em estoque do produto, por fornecedor, lote e estoque
-	qtd_max_estoq_prod_f_l_e NUMERIC(10,3) := (SELECT p.max_estoque FROM ge_produto p WHERE p.id = (SELECT pf.id_ge_prod FROM ge_produto_fornecedor AS pf WHERE id_ge_prod = NEW.id_ge_prod AND id_ge_fornecedor = NEW.id_ge_fornecedor AND id_ge_lote = NEW.id_ge_lote AND id_ge_estoque = NEW.id_ge_estoque));
+	qtd_max_estoq_prod_f_l_e NUMERIC(10,3) := (SELECT p.max_estoque FROM ge_produto p WHERE p.id = (SELECT pf.id_ge_prod FROM ge_produto_fornecedor AS pf WHERE id_ge_prod = NEW.id_ge_prod AND id_gf_fornecedor = NEW.id_gf_fornecedor AND id_ge_lote = NEW.id_ge_lote AND id_ge_estoque = NEW.id_ge_estoque));
 	
 
 BEGIN
@@ -376,7 +353,7 @@ IF ge_produto_ativo = true THEN --se o produto estiver ativo
 		IF ge_estoque_ativo = true THEN --se o estoque estiver ativo
 			IF tp_ge_op_estoque = 'Entrada' THEN --se a operaçao de estoque for de entrada
 				IF NEW.id_ge_lote IS NULL THEN --caso não foi informado o lote do produto
-					IF NEW.id_ge_fornecedor IS NULL THEN --caso não foi informado o fornecedor
+					IF NEW.id_gf_fornecedor IS NULL THEN --caso não foi informado o fornecedor
 						IF EXISTS (SELECT 1 FROM ge_produto p WHERE p.id = NEW.id_ge_prod) THEN --caso o produto informado já esteja cadastrado, sem lote
 							 --verifica se a quantia em estoque + a quantia a ser movimentada não é superior ao estoque_maximo
 							IF ((qtd_atual_prod + NEW.quantidade) > qtd_max_estoq_prod) THEN 
@@ -393,7 +370,7 @@ IF ge_produto_ativo = true THEN --se o produto estiver ativo
 							USING HINT = 'Realize o cadastro do produto para realizar movimentação de estoque';
 						END IF;
 					ELSE --caso foi informado o fornecedor, sem lote
-						IF EXISTS (SELECT 1 FROM ge_produto_fornecedor WHERE id_ge_prod = NEW.id_ge_prod AND id_ge_fornecedor = NEW.id_ge_fornecedor) THEN
+						IF EXISTS (SELECT 1 FROM ge_produto_fornecedor WHERE id_ge_prod = NEW.id_ge_prod AND id_gf_fornecedor = NEW.id_gf_fornecedor) THEN
 							 --verifica se a quantia em estoque + a quantia a ser movimentada não é superior ao estoque_maximo
 							IF ((qtd_atual_prod_f + NEW.quantidade) > qtd_max_estoq_prod_f) THEN 
 								RAISE EXCEPTION 'Quantia maxima de estoque do produto por fornecedor excedida! '
@@ -401,7 +378,7 @@ IF ge_produto_ativo = true THEN --se o produto estiver ativo
 							ELSE
 								UPDATE ge_produto_fornecedor
 								SET quantia_estoque = (qtd_atual_prod_f + NEW.quantidade), editado = CURRENT_TIMESTAMP, id_ge_estoque = NEW.id_ge_estoque, id_ga_usuario = NEW.id_ga_usuario
-								WHERE id_ge_prod = NEW.id_ge_prod AND id_ge_fornecedor = NEW.id_ge_fornecedor;
+								WHERE id_ge_prod = NEW.id_ge_prod AND id_gf_fornecedor = NEW.id_gf_fornecedor;
 								RETURN NEW;
 							END IF;
 						ELSE --caso ainda não exista registro na tabela ge_produto_fornecedor, e o lote não tenha sido informado
@@ -411,9 +388,9 @@ IF ge_produto_ativo = true THEN --se o produto estiver ativo
 								USING HINT = 'Verifique o campo max_estoque do cadastro do produto';
 							ELSE 
 								INSERT INTO ge_produto_fornecedor
-								(id_ge_prod, id_ge_fornecedor, quantia_estoque, valor_custo, valor_venda, id_ge_estoque, id_ga_usuario, criado)
+								(id_ge_prod, id_gf_fornecedor, quantia_estoque, valor_custo, valor_venda, id_ge_estoque, id_ga_usuario, criado)
 								VALUES
-								(NEW.id_ge_prod, NEW.id_ge_fornecedor, NEW.quantidade, (SELECT p.valor_custo FROM ge_produto p WHERE p.id = NEW.id_ge_prod), 
+								(NEW.id_ge_prod, NEW.id_gf_fornecedor, NEW.quantidade, (SELECT p.valor_custo FROM ge_produto p WHERE p.id = NEW.id_ge_prod), 
 								(SELECT p.valor_venda FROM ge_produto p WHERE p.id = NEW.id_ge_prod), NEW.id_ge_estoque, NEW.id_ga_usuario, CURRENT_TIMESTAMP);
 								RAISE NOTICE 'Inserido produto e fornecedor na tabela ge_produto_fornecedor, utilizando valor de custo e venda previamente cadastrado!)';
 								RETURN NEW;
@@ -422,7 +399,7 @@ IF ge_produto_ativo = true THEN --se o produto estiver ativo
 					END IF;
 				ELSE --caso foi informado o lote do produto
 					IF validade_lote >= CURRENT_DATE THEN --se o lote estiver dentro do prazo de validade
-						IF NEW.id_ge_fornecedor IS NULL THEN --caso não foi informado o fornecedor
+						IF NEW.id_gf_fornecedor IS NULL THEN --caso não foi informado o fornecedor
 							--verifica se a quantia em estoque + a quantia a ser movimentada não é superior ao estoque_maximo
 							IF ((qtd_atual_prod_l + NEW.quantidade) > qtd_max_estoq_prod_l) THEN
 								RAISE EXCEPTION 'Quantia maxima de estoque do produto por lote excedida! '
@@ -444,16 +421,16 @@ IF ge_produto_ativo = true THEN --se o produto estiver ativo
 								RAISE EXCEPTION 'Quantia maxima de estoque do produto por fornecedor e lote excedida! '
 								USING HINT = 'Verifique o campo max_estoque do cadastro do produto';
 							ELSE
-								IF EXISTS (SELECT 1 FROM ge_produto_fornecedor WHERE id_ge_prod = NEW.id_ge_prod AND id_ge_fornecedor = NEW.id_ge_fornecedor AND id_ge_lote = NEW.id_ge_lote) THEN
+								IF EXISTS (SELECT 1 FROM ge_produto_fornecedor WHERE id_ge_prod = NEW.id_ge_prod AND id_gf_fornecedor = NEW.id_gf_fornecedor AND id_ge_lote = NEW.id_ge_lote) THEN
 									UPDATE ge_produto_fornecedor
 									SET quantia_estoque = (qtd_atual_prod_f_l + NEW.quantidade), editado = CURRENT_TIMESTAMP, id_ge_estoque = NEW.id_ge_estoque, id_ga_usuario = NEW.id_ga_usuario
-									WHERE id_ge_prod = NEW.id_ge_prod AND id_ge_fornecedor = NEW.id_ge_fornecedor;
+									WHERE id_ge_prod = NEW.id_ge_prod AND id_gf_fornecedor = NEW.id_gf_fornecedor;
 									RETURN NEW;
 								ELSE --caso ainda não exista registro na tabela ge_produto_fornecedor, e o lote tenha sido informado
 									INSERT INTO ge_produto_fornecedor
-									(id_ge_prod, id_ge_fornecedor, quantia_estoque, valor_custo, valor_venda, id_ge_lote, id_ge_estoque, id_ga_usuario, criado)
+									(id_ge_prod, id_gf_fornecedor, quantia_estoque, valor_custo, valor_venda, id_ge_lote, id_ge_estoque, id_ga_usuario, criado)
 									VALUES
-									(NEW.id_ge_prod, NEW.id_ge_fornecedor, NEW.quantidade, (SELECT p.valor_custo FROM ge_produto p WHERE p.id = NEW.id_ge_prod AND p.id_ge_lote = NEW.id_ge_lote), 
+									(NEW.id_ge_prod, NEW.id_gf_fornecedor, NEW.quantidade, (SELECT p.valor_custo FROM ge_produto p WHERE p.id = NEW.id_ge_prod AND p.id_ge_lote = NEW.id_ge_lote), 
 									(SELECT p.valor_venda FROM ge_produto p WHERE p.id = NEW.id_ge_prod AND p.id_ge_lote = NEW.id_ge_lote), NEW.id_ge_lote, NEW.id_ge_estoque, NEW.id_ga_usuario, CURRENT_TIMESTAMP);
 									RAISE NOTICE 'Inserido produto e fornecedor na tabela ge_produto_fornecedor, utilizando valor de custo e venda e lote previamente cadastrado!)';
 									RETURN NEW;
