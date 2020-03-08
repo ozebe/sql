@@ -177,7 +177,7 @@ FOREIGN KEY(id_gf_fornecedor) REFERENCES gf_fornecedor(id)
  --    \/     |_____| |______|     \/  \/     |_____/ 
 --------------------------------------------------------------------------
 --VIEW FORNECEDORES
-CREATE OR REPLACE VIEW public.vw_ge_fornecedores
+CREATE OR REPLACE VIEW public.vw_gf_fornecedores
 AS SELECT f.razao_social,
     f.nome_fantasia,
     f.telefone,
@@ -313,7 +313,7 @@ DECLARE
 	ge_op_estoque_ativo BOOLEAN := (SELECT op.ativo FROM ge_op_estoque op WHERE op.id = NEW.id_ge_op_estoque); --operação de estoque ativa?
 	ge_estoque_ativo BOOLEAN := (SELECT e.ativo FROM ge_estoque e WHERE e.id = NEW.id_ge_estoque); --estoque ativo ?
 	validade_lote DATE := (SELECT l.data_val FROM ge_lote l WHERE l.id = NEW.id_ge_lote); --data de validade do lote inserido 
-	ge_fornecedor_ativo BOOLEAN := (SELECT f.ativo FROM gf_fornecedor f WHERE f.id = NEW.id_gf_fornecedor); --fornecedor ativo ?
+	gf_fornecedor_ativo BOOLEAN := (SELECT f.ativo FROM gf_fornecedor f WHERE f.id = NEW.id_gf_fornecedor); --fornecedor ativo ?
 	tp_ge_op_estoque VARCHAR := (SELECT o.tipo FROM ge_op_estoque o WHERE o.id = NEW.id_ge_op_estoque); --verifica o tipo da operação de estoque
 	
 	--quantia atual do produto por tal fornecedor, sem lote.
