@@ -93,6 +93,10 @@ valor_venda NUMERIC(10,2), --valor de venda do produto
 min_estoque NUMERIC(10,3) CHECK (min_estoque >= 0) NOT NULL, --mínimo em estoque do produto
 max_estoque NUMERIC(10,3) CHECK (max_estoque >= min_estoque), --máximo em estoque para o produto
 estoque_atual NUMERIC(10,2), --quantia em estoque atual
+cor VARCHAR(100), --cor de produto, para variação
+material VARCHAR(100), --material do produto
+tamanho VARCHAR(50), -- tamanho do produto, exemplo: P, M, G
+tensao VARCHAR(6) CHECK (tensao IN ('110V', '220V', 'Outros')), --para produtos elétricos
 criado TIMESTAMP NOT NULL, --data de inserção
 editado TIMESTAMP, --data de edição do produto
 PRIMARY KEY(id),
@@ -300,6 +304,10 @@ AS SELECT p.codigo AS cod_produto,
     p.peso_liquido,
     p.min_estoque,
     p.max_estoque,
+	p.cor,
+	p.material,
+	p.tamanho, 
+	p.tensao,
     p.criado,
     p.editado
    FROM ge_produto p
