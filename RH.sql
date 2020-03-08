@@ -11,22 +11,6 @@
 -- funcionários e etc.
 --PRE-REQUISITOS: Nenhum
 
-CREATE TABLE rh_escolaridade(
-id SERIAL NOT NULL UNIQUE,
-descricao VARCHAR(255) NOT NULL,
-criado TIMESTAMP NOT NULL,
-editado TIMESTAMP,
-PRIMARY KEY(id)
-);
-
-CREATE TABLE rh_situacao_escolar(
-id SERIAL NOT NULL UNIQUE,
-descricao VARCHAR(255) NOT NULL,
-criado TIMESTAMP NOT NULL,
-editado TIMESTAMP,
-PRIMARY key(id)
-);
-
 CREATE TABLE rh_area_profissao(
 id SERIAL NOT NULL UNIQUE,
 descricao VARCHAR(255) NOT NULL,
@@ -71,15 +55,13 @@ end_compl VARCHAR(255), --complemento
 end_bairro VARCHAR(255) NOT NULL, --bairro
 end_localid VARCHAR(255) NOT NULL, --localidade
 end_uf VARCHAR(2), --UF PR, SC e etc
-id_rh_sit_escol INTEGER, --para cadastro de funcionario
-id_rh_escol INTEGER, --para cadastro de funcionario
+situacao_escolar VARCHAR(10) CHECK (situacao_escolar IN ('Completo', 'Incompleto', 'Cursando')),--para cadastro de funcionario
+escolaridade VARCHAR(255) CHECK (escolaridade IN ('Ensino Fundamental','Ensino Médio','Ensino superior', 'Pós-graduação')), --para cadastro de funcionario
 id_profissao INTEGER, --informação complementar no cadastro do cliente
 criado TIMESTAMP NOT NULL,
 editado TIMESTAMP,
 PRIMARY KEY(id),
-FOREIGN KEY (id_profissao) REFERENCES rh_profissao(id), --dados para analise de credito, como analista de sistema, salario tal, admissão tal.
-FOREIGN KEY (id_rh_sit_escol) REFERENCES rh_situacao_escolar(id),
-FOREIGN KEY (id_rh_escol) REFERENCES rh_escolaridade(id)
+FOREIGN KEY (id_profissao) REFERENCES rh_profissao(id) --dados para analise de credito, como analista de sistema, salario tal, admissão tal.
 );
 
 CREATE TABLE rh_jornada_trabalho(
