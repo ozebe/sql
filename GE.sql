@@ -205,7 +205,7 @@ AS SELECT f.razao_social,
         END AS opt_simpl_nacional,
     f.criado,
     f.editado
-   FROM gf_fornecedor f
+   FROM gf_fornecedor f;
 -------------------------------------------------------------------------------
 --VIEW MOVIMENTACOES DE ESTOQUE quantiade, valor
 CREATE OR REPLACE VIEW public.vw_ge_movs_estoque
@@ -267,7 +267,7 @@ AS SELECT p.codigo AS cod_produto,
             ELSE 'Não'::text
         END AS ativo,
     p.descricao,
-	p.quantia_estoque AS qtd_em_estoque,
+	p.estoque_atual AS qtd_em_estoque,
     p.valor_venda,
     p.valor_custo,
     u.descricao AS unid_medida,
