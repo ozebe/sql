@@ -64,6 +64,29 @@ PRIMARY KEY(id),
 FOREIGN KEY (id_profissao) REFERENCES rh_profissao(id) --dados para analise de credito, como analista de sistema, salario tal, admissão tal.
 );
 
+CREATE TABLE rh_pessoa_juridica(
+id SERIAL NOT NULL UNIQUE,
+razao_social VARCHAR(255) NOT NULL,
+nome_fantasia VARCHAR(255) NOT NULL,
+telefone VARCHAR(20), --telefone da pessoa juridica
+email VARCHAR(255) UNIQUE, --email para contato da pessoa juridica
+end_logr VARCHAR(255), --logradouro
+end_num INTEGER, --número
+end_cep VARCHAR(10), --cep
+end_compl VARCHAR(255), --complemento
+end_bairro VARCHAR(255), --bairro
+end_localid VARCHAR(255), --localidade, cidade
+end_uf VARCHAR(2), --UF PR, SC e etc
+cnpj VARCHAR(14) UNIQUE, --cnpj da pessoa juridica
+ie VARCHAR(9) UNIQUE, --inscrição estadual da pessoa juridica
+isento_icms BOOLEAN, --pessoa juridica isento do icms ?
+opt_simpl_nacional BOOLEAN, --pessoa juridica optante pelo simples nacional ?
+ativo BOOLEAN NOT NULL, --pessoa juridica esta ativo ou não
+criado TIMESTAMP NOT NULL,
+editado TIMESTAMP,
+PRIMARY KEY(id)
+);
+
 CREATE TABLE rh_jornada_trabalho(
 id SERIAL NOT NULL UNIQUE,
 descricao VARCHAR(255) NOT NULL,
