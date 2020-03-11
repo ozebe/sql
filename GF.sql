@@ -83,7 +83,7 @@ tipo VARCHAR(7) CHECK (tipo IN ('Credito', 'Debito')) NOT NULL,
 nome VARCHAR(255), -- Nubank, Inter, e tudo mais
 bandeira VARCHAR(30) NOT NULL, -- Mastercard, Visa
 max_parcelas SMALLINT, --máximo de parcelas por cartão, 6, 12, 24
-taxa_deb_ NUMERIC(10,2), --% de taxa na venda
+taxa_deb NUMERIC(10,2), --% de taxa na venda
 taxa_cred NUMERIC(10,2), --% de taxa de crédito a vista
 taxa_cred_parcela NUMERIC (10,2), --% de taxa de crédito por a mais por parcela 
 criado TIMESTAMP NOT NULL,
@@ -115,7 +115,8 @@ id_gf_cliente_devedor INTEGER NOT NULL, --id do cliente devedor
 criado TIMESTAMP NOT NULL, --data de criação
 editado TIMESTAMP, --data de edição
 PRIMARY KEY(id),
-FOREIGN KEY (id_gf_plan_contas) REFERENCES gf_plano_contas(id_plano)--plano de contas(id)
+FOREIGN KEY (id_gf_plan_contas) REFERENCES gf_plano_contas(id_plano),--plano de contas(id)
+FOREIGN KEY (id_gf_cliente_devedor) REFERENCES gf_cliente(id)
 );
 
 --tabelas onde estão as contas a pagar, geradas automaticamente ou manualmente
