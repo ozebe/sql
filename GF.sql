@@ -17,11 +17,12 @@
 --PRE-REQUISITOS: RH (rh_pessoa_fisica, rh_pessoa_juridica), GA(ga_usuario)
 
 --tabela de cadastro de cliente (antes de inserir verificar se existe a pessoa fisica ou juridica)
+--adicionar possibilidade de ser Consumidor final ?
 CREATE TABLE gf_cliente(
 id SERIAL NOT NULL UNIQUE,
 id_rh_pessoa_fis INTEGER UNIQUE, --id da tabela rh_pessoa_fisica
 id_rh_pessoa_jur INTEGER UNIQUE, --id da tabela rh_pessoa_juridica
-limite_credito NUMERIC(10,2) NOT NULL, --limite de crédito do cliente
+limite_credito NUMERIC(10,2), --limite de crédito do cliente
 credito NUMERIC(10,2), --credito do cliente, proveniente de estornos devoluções e etc.
 criado TIMESTAMP NOT NULL, --data de criação
 editado TIMESTAMP, --data de edição
@@ -98,20 +99,25 @@ CREATE TABLE gf_tipo_pagamento(
 id SERIAL NOT NULL UNIQUE,
 descricao VARCHAR(20) CHECK (descricao IN ('Dinheiro', 'Debito', 'Credito', 'Credito Parcelado', 'Alimentacao/Refeicao', 'Boleto', 'Fiado')) NOT NULL,
 id_gf_cartao INTEGER, --id do cartão de crédito/debito, caso possua
+id_gf_plan_contas VARCHAR(16), --id do plano de contas para controle
 criado TIMESTAMP NOT NULL,
 editado TIMESTAMP,
 PRIMARY KEY(id),
-FOREIGN KEY(id_gf_cartao) REFERENCES gf_cartao(id)
+FOREIGN KEY(id_gf_cartao) REFERENCES gf_cartao(id),
+FOREIGN KEY (id_gf_plan_contas) REFERENCES gf_plano_contas(id_plano)--plano de contas(id)
 );
 
 --tabelas onde estão as contas a receber, geradas automaticamente ou manualmente
 --verificar a possibilidade de substituir o num doc para serial
+--adicionar campo de recibo
 CREATE TABLE gf_conta_receber(
 id SERIAL NOT NULL UNIQUE,
 num_doc VARCHAR(30) NOT NULL UNIQUE, --número do documento gerado na conta a receber
 id_gf_plan_contas VARCHAR(16) NOT NULL, -- id do plano de contas, ex: duplicatas a receber, que o lançamento será vinculado, ex: Caixa (verificar analitico ou sintetico agrupar por grupo, ex: 1.01.001)
 val_tot_conta NUMERIC(10,2) NOT NULL, --valor total da conta a receber
 id_gf_cliente_devedor INTEGER NOT NULL, --id do cliente devedor
+observacao VARCHAR(255), --observacao
+recibo BYTEA, --recibo de conta a receber
 criado TIMESTAMP NOT NULL, --data de criação
 editado TIMESTAMP, --data de edição
 PRIMARY KEY(id),
@@ -127,6 +133,8 @@ num_doc VARCHAR(30) NOT NULL UNIQUE, --número do documento gerado na conta a pa
 id_gf_plan_contas VARCHAR(16) NOT NULL, -- id do plano de contas que o lançamento será vinculado, ex: Caixa
 val_tot_conta NUMERIC(10,2) NOT NULL, --valor total da conta a pagar
 id_gf_credor INTEGER NOT NULL, --id do credor(fornecedor)
+observacao VARCHAR(255),  --observacao
+recibo BYTEA, --recibo de conta a receber
 criado TIMESTAMP NOT NULL, --data de criação
 editado TIMESTAMP, --data de edição
 PRIMARY KEY(id),
@@ -135,6 +143,7 @@ FOREIGN KEY (id_gf_credor) REFERENCES gf_credor(id)
 );
 
 --tabela onde estão as parcelas das contas a receber
+--adicionar campo de recebio
 CREATE TABLE gf_parcela_receber(
 id SERIAL NOT NULL UNIQUE,
 id_gf_conta_receber INTEGER NOT NULL, --id da conta a receber
@@ -145,6 +154,7 @@ valor_bruto NUMERIC(10,2) NOT NULL, --valor bruto da parcela
 valor_liquido NUMERIC(10,2) NOT NULL, --valor líquido da parcela
 acrescimo_desconto NUMERIC(10,2), --valor de acrescimo ou de desconto
 situacao VARCHAR(10) CHECK (situacao IN ('Aberta', 'Vencida', 'Quitada', 'Cancelada')) NOT NULL,
+recibo BYTEA, --recibo de recebimento opcional da parcela
 criado TIMESTAMP NOT NULL, --data de criação
 editado TIMESTAMP, --data de edição
 PRIMARY KEY(id),
@@ -153,6 +163,7 @@ FOREIGN KEY (id_gf_tipo_pagamento) REFERENCES gf_tipo_pagamento(id)
 );
 
 --tabela onde estão as parcelas das contas a pagar
+--adicionar campo de recebio
 CREATE TABLE gf_parcela_pagar(
 id SERIAL NOT NULL UNIQUE,
 id_gf_conta_pagar INTEGER NOT NULL, --id da conta a receber
@@ -163,6 +174,7 @@ valor_bruto NUMERIC(10,2) NOT NULL, --valor bruto da parcela
 valor_liquido NUMERIC(10,2) NOT NULL, --valor líquido da parcela
 acrescimo_desconto NUMERIC(10,2), --valor de acrescimo ou de desconto
 situacao VARCHAR(10) CHECK (situacao IN ('Aberta', 'Vencida', 'Quitada', 'Cancelada')) NOT NULL,
+recibo BYTEA, --recibo de pagamento opcional da parcela
 criado TIMESTAMP NOT NULL, --data de criação
 editado TIMESTAMP, --data de edição
 PRIMARY KEY(id),
@@ -226,3 +238,46 @@ FOREIGN KEY(id_pj_titular) REFERENCES rh_pessoa_juridica(id)
 
 --no relatorio de fluxo de caixa o saldo é o valor das entradas diminuindo as saidas
 --ao fazer um lançamento é necessário selecionar a conta bancária (que possui o plano de contas que pode ser de caixa, cartão e etc)
+
+--------------------------------------------------------------------------
+--  _______   _                           
+-- |__   __| (_)                          
+--    | |_ __ _  __ _  __ _  ___ _ __ ___ 
+--    | | '__| |/ _` |/ _` |/ _ \ '__/ __|
+--    | | |  | | (_| | (_| |  __/ |  \__ \
+--    |_|_|  |_|\__, |\__, |\___|_|  |___/
+--               __/ | __/ |              
+--              |___/ |___/               
+--------------------------------------------------------------------------
+--função que verifica se a parcela a receber a ser inserida não possui valor bruto superior ao valor aberto não quitado da conta a receber
+CREATE OR REPLACE FUNCTION fn_verifica_gf_parcela_receber() RETURNS TRIGGER AS $fn_verifica_gf_parcela_receber$
+DECLARE
+	conta_receber_val_tot NUMERIC(10,2) := (SELECT c.val_tot_conta FROM gf_conta_receber c WHERE c.id = NEW.id_gf_conta_receber); --valor total da conta a receber
+	val_bruto_quitado NUMERIC(10,2) := (SELECT SUM(p.valor_bruto) FROM gf_parcela_receber p WHERE p.id_gf_conta_receber = NEW.id_gf_conta_receber AND p.situacao = 'Quitada'); --valor total bruto em parcelas do tipo Quitadas vinculadas a conta a receber 
+BEGIN
+IF val_bruto_quitado IS NULL THEN --se o valor bruto total das parcelas do tipo quitadas vinculadas a conta a receber estiver nulo
+
+ELSE --caso exista valor bruto e Quitado em parcelas vinculadas a conta a receber
+	IF val_bruto_quitado >= conta_receber_val_tot AND NEW.situacao = 'Quitada' THEN --caso o valor bruto quitado das parcelas seja maior ou igual ao valor total da conta a receber
+		RAISE EXCEPTION 'Não é possível adicionar/Quitar mais parcelas pois a conta a receber já tem seu valor total quitado';
+	ELSE
+		IF NEW.valor_bruto > (conta_receber_val_tot - val_bruto_quitado) AND NEW.situacao = 'Quitada' THEN
+			RAISE EXCEPTION 'Não é possível adicionar/Quitar parcela pois o seu valor bruto é maior que o valor que falta para quitar a conta a receber, Valor que falta para quitar a conta: %', (conta_receber_val_tot - val_bruto_quitado);
+		ELSE
+			RETURN NEW;
+		END IF;
+	END IF;
+END IF;
+RETURN NEW;
+END;
+$fn_verifica_gf_parcela_receber$ LANGUAGE plpgsql;
+
+--trigger antes de inserir uma conta a receber
+CREATE TRIGGER trg_parcela_receber_insert
+	BEFORE INSERT ON gf_parcela_receber 
+		FOR EACH ROW EXECUTE PROCEDURE fn_verifica_gf_parcela_receber();
+		
+--trigger antes de atualizar uma conta a receber		
+CREATE TRIGGER trg_parcela_receber_update
+	BEFORE UPDATE ON gf_parcela_receber 
+		FOR EACH ROW EXECUTE PROCEDURE fn_verifica_gf_parcela_receber();
