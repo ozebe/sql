@@ -13,7 +13,7 @@
 --PRE-REQUISITOS: GA, GF
 --ga_nivel_acesso, ga_usuario, gf_fornecedor
 
---unidade de medida, ex: UN, KG, GR, TON
+--unidade de medida, ex: UN, CM, M, M²
 CREATE TABLE ge_unidade_medida(
 id SERIAL NOT NULL UNIQUE,
 descricao VARCHAR(255) NOT NULL UNIQUE,
@@ -78,8 +78,8 @@ CREATE TABLE ge_produto(
 id SERIAL NOT NULL UNIQUE,
 codigo VARCHAR(30) NOT NULL UNIQUE, --código de controle interno do produto
 descricao VARCHAR(255), --descrição do produto
-id_unid_medida INTEGER NOT NULL, --unidade de medida, KG, GRAMAS.
-id_unid_massa INTEGER, --unidade de medida de massa para o peso bruto e liquido
+id_unid_medida INTEGER NOT NULL, --unidade de medida, UN, CM.
+id_unid_massa INTEGER, --unidade de medida de massa para o peso bruto e liquido KG, GRAMAS
 id_ge_sub_grupo_prod INTEGER NOT NULL,  --Sub grupo do produto ex: banana, frutas, alimentos.
 id_ge_estoque INTEGER, --id do estoque a qual o produto se encontra
 cod_barras VARCHAR(255), --código de barras do produto
@@ -165,6 +165,24 @@ FOREIGN KEY(id_ge_estoque) REFERENCES ge_estoque(id),
 FOREIGN KEY(id_gf_fornecedor) REFERENCES gf_fornecedor(id)
 );
 
+--depois de inserir em estorno, deve se excluir a movimentação de estoque referida e colocar/tirar (entrada ou saida)os materiais da movimentação.
+CREATE TABLE ge_estorno_movs_estoq(
+id SERIAL NOT NULL UNIQUE,
+id_ge_mov_estoque INTEGER NOT NULL UNIQUE, --id da movimentação de estoque referida
+motivo_estorno VARCHAR(255) NOT NULL, --motivo do estorno, pode ser de preenchimento automático, caso seja por venda e etc ou não.
+data_estorno TIMESTAMP NOT NULL, --colocar automaticamente baseado no current_timestamp
+id_ga_usuario_estorno INTEGER NOT NULL, --id do usuario que realizou o estorno, pegar automaticamente do usuário logado.
+id_ge_prod_estorno INTEGER, --id do produto que foi estornado
+ig_ge_prod_fornec_estor INTEGER, --id do produto por fornecedor estornado
+id_ge_op_mov_estoque INTEGER NOT NULL, --id da operação de estoque, ex: estorno do tipo Saida
+quantia_estornada NUMERIC(10,3) NOT NULL, --quantidade do produto estornada
+PRIMARY KEY(id),
+FOREIGN KEY(id_ge_mov_estoque) REFERENCES ge_mov_estoque(id),
+FOREIGN KEY(id_ga_usuario_estorno) REFERENCES ga_usuario(id),
+FOREIGN KEY(id_ge_prod_estorno) REFERENCES ge_produto(id),
+FOREIGN KEY(ig_ge_prod_fornec_estor) REFERENCES ge_produto_fornecedor(id),
+FOREIGN KEY(id_ge_op_mov_estoque) REFERENCES ge_op_estoque(id)
+);
 
 
 --Big Money-sw
