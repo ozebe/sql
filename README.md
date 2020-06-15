@@ -27,15 +27,15 @@ Caso queira algum módulo especifico, como gestão de acesso, RH ou algo do tipo
 
 **Nomes das Tabelas**
 
-**rh_xxxxxx_xxxxx** : *São tabelas destinadas á recursos humanos, nelas possuem pessoas físicas, funcionários, fornecedores e etc.*
+**rh_xxxxxx_xxxxx** : *São tabelas destinadas á recursos humanos, nelas possuem pessoas físicas, funcionários, dependentes, jornadas de trabalho, profissões e etc.*
 
 **ge_xxxxxx_xxxxx** : *São tabelas destinadas á gestão do estoque, contendo, estoque, grupo de produto, lote, movimentação de estoque, operação de estoque, produto, unidade de medida e etc.*
 
 **ga_xxxxxx_xxxxx** :  *São tabelas destinadas á gestão de acesso, contendo tabelas como usuario, nivel de acesso e etc.*
 
-**gf_xxxxxx_xxxxx** :  *São tabelas destinadas á gestão de finanças.*
+**gf_xxxxxx_xxxxx** :  *São tabelas destinadas á gestão de finanças., contendo tabelas como cadastro de fornecedores, clientes, lista de credores, planos de contas, cartões, tipos de pagamentos, contas a receber, contas a pagar, parcelas das respectivas contas a pagar e receber, bancos, agências bancárias,  contas bancárias
 
-**gv_xxxxxx_xxxxx** : *São tabelas destinadas a gestão de vendas, com cadastro de cartões, tipos de pagamento, efetivação de parcelas*
+**gv_xxxxxx_xxxxx** : *São tabelas destinadas a gestão de vendas.
 
 **ma_xxxxxx_xxxxx** :  *São tabelas de miscelanea como agenda e etc*
 
