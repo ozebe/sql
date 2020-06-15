@@ -29,17 +29,6 @@ PRIMARY KEY(id),
 FOREIGN KEY (rh_area_prof_id) REFERENCES rh_area_profissao(id)
 );
 
-CREATE TABLE rh_profissao(
-id SERIAL NOT NULL UNIQUE,
-rh_tp_prof_id INTEGER NOT NULL,
-salario NUMERIC(10,2), --verificar caso o cadastro de pessoa fisica seja apenas para um cliente e etc
-admissao DATE,
-criado TIMESTAMP NOT NULL,
-editado TIMESTAMP,
-PRIMARY KEY(id),
-FOREIGN KEY (rh_tp_prof_id) REFERENCES rh_tipo_profissao(id)
-);
-
 CREATE TABLE rh_pessoa_fisica(
 id SERIAL NOT NULL UNIQUE,
 nome VARCHAR(255) NOT NULL,
