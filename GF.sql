@@ -34,25 +34,12 @@ FOREIGN KEY (id_rh_pessoa_jur) REFERENCES rh_pessoa_juridica(id)
 --tabela de cadastro de fornecedor, verificar possibilidade de deixar assim ou alterar para rh_pessoa_juridica
 CREATE TABLE gf_fornecedor(
 id SERIAL NOT NULL UNIQUE,
-razao_social VARCHAR(255) NOT NULL,
-nome_fantasia VARCHAR(255) NOT NULL,
-telefone VARCHAR(20), --telefone do fornecedor
-email VARCHAR(255) UNIQUE, --email para contato do fornecedor
-end_logr VARCHAR(255), --logradouro
-end_num INTEGER, --número
-end_cep VARCHAR(10), --cep
-end_compl VARCHAR(255), --complemento
-end_bairro VARCHAR(255), --bairro
-end_localid VARCHAR(255), --localidade, cidade
-end_uf VARCHAR(2), --UF PR, SC e etc
-cnpj VARCHAR(14) UNIQUE, --cnpj do fornecedor
-ie VARCHAR(9) UNIQUE, --inscrição estadual do fornecedor
-isento_icms BOOLEAN, --fornecedor isento do icms ?
-opt_simpl_nacional BOOLEAN, --fornecedor optante pelo simples nacional ?
+id_rh_pessoa_jur INTEGER UNIQUE, --id da tabela rh_pessoa_juridica
 ativo BOOLEAN NOT NULL, --se tal fornecedor esta ativo ou não
 criado TIMESTAMP NOT NULL,
 editado TIMESTAMP,
-PRIMARY KEY(id)
+PRIMARY KEY(id),
+FOREIGN KEY (id_rh_pessoa_jur) REFERENCES rh_pessoa_juridica(id)
 );
 
 --tabela de credores, onde existem os credores para contas a pagar
@@ -149,7 +136,7 @@ id SERIAL NOT NULL UNIQUE,
 id_gf_conta_receber INTEGER NOT NULL, --id da conta a receber
 id_gf_tipo_pagamento INTEGER NOT NULL, --tipo do pagamento Dinheiro, cartão e etc
 data_venc DATE NOT NULL, --data de vencimento da parcela
-data_pagamento DATE NOT NULL, --data de pagamento da parcela
+data_pagamento DATE, --data de pagamento da parcela
 valor_bruto NUMERIC(10,2) NOT NULL, --valor bruto da parcela
 valor_liquido NUMERIC(10,2) NOT NULL, --valor líquido da parcela
 acrescimo_desconto NUMERIC(10,2), --valor de acrescimo ou de desconto
@@ -169,7 +156,7 @@ id SERIAL NOT NULL UNIQUE,
 id_gf_conta_pagar INTEGER NOT NULL, --id da conta a receber
 id_gf_tipo_pagamento INTEGER NOT NULL, --tipo do pagamento Dinheiro, cartão e etc
 data_venc DATE NOT NULL, --data de vencimento da parcela
-data_pagamento DATE NOT NULL, --data de pagamento da parcela
+data_pagamento DATE, --data de pagamento da parcela
 valor_bruto NUMERIC(10,2) NOT NULL, --valor bruto da parcela
 valor_liquido NUMERIC(10,2) NOT NULL, --valor líquido da parcela
 acrescimo_desconto NUMERIC(10,2), --valor de acrescimo ou de desconto
