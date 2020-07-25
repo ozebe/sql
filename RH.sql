@@ -29,6 +29,7 @@ PRIMARY KEY(id),
 FOREIGN KEY (rh_area_prof_id) REFERENCES rh_area_profissao(id)
 );
 
+
 CREATE TABLE rh_pessoa_fisica(
 id SERIAL NOT NULL UNIQUE,
 nome VARCHAR(255) NOT NULL,
@@ -46,11 +47,13 @@ end_localid VARCHAR(255) NOT NULL, --localidade
 end_uf VARCHAR(2), --UF PR, SC e etc
 situacao_escolar VARCHAR(10) CHECK (situacao_escolar IN ('Completo', 'Incompleto', 'Cursando')),--para cadastro de funcionario
 escolaridade VARCHAR(255) CHECK (escolaridade IN ('Ensino Fundamental','Ensino Médio','Ensino superior', 'Pós-graduação')), --para cadastro de funcionario
-id_profissao INTEGER, --informação complementar no cadastro do cliente
+rh_tp_prof_id INTEGER NOT NULL, --tipo da profissão, para consulta de crédito e etc
+salario NUMERIC(10,2), --verificar caso o cadastro de pessoa fisica seja apenas para um cliente e etc
+admissao DATE, --complementar ao tipo da profissao
 criado TIMESTAMP NOT NULL,
 editado TIMESTAMP,
 PRIMARY KEY(id),
-FOREIGN KEY (id_profissao) REFERENCES rh_profissao(id) --dados para analise de credito, como analista de sistema, salario tal, admissão tal.
+FOREIGN KEY (rh_tp_prof_id) REFERENCES rh_tipo_profissao(id)
 );
 
 CREATE TABLE rh_pessoa_juridica(
