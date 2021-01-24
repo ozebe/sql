@@ -156,6 +156,8 @@ val_total NUMERIC(10,2), --valor total da movimentação do estoque
 id_ga_usuario INTEGER NOT NULL, --id do usuario que realizou a movimentação de estoque
 criado TIMESTAMP NOT NULL, --data de criação da movimentação
 editado TIMESTAMP, --data de edição da movimentação
+estornada BOOLEAN, --caso a movimentação de estoque venha a ser estornada, esse campo não deve ser editado manualmente pelo usuário
+data_estorno DATE, --data da realização do estorno
 PRIMARY KEY(id),
 FOREIGN KEY(id_ge_prod) REFERENCES ge_produto(id),
 FOREIGN KEY(id_ge_lote) REFERENCES ge_lote(id),
@@ -165,7 +167,8 @@ FOREIGN KEY(id_ge_estoque) REFERENCES ge_estoque(id),
 FOREIGN KEY(id_gf_fornecedor) REFERENCES gf_fornecedor(id)
 );
 
---depois de inserir em estorno, deve se excluir a movimentação de estoque referida e colocar/tirar (entrada ou saida)os materiais da movimentação.
+--depois de inserir em estorno, deve se colocar/tirar (entrada ou saida)os materiais da movimentação e marcar a movimentação de estoque estornada como estornada = true
+--e colocar a data que foi realizada o estorno
 CREATE TABLE ge_estorno_movs_estoq(
 id SERIAL NOT NULL UNIQUE,
 id_ge_mov_estoque INTEGER NOT NULL UNIQUE, --id da movimentação de estoque referida
