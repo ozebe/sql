@@ -87,7 +87,7 @@ NCM VARCHAR(255), --para tributação
 ativo BOOLEAN NOT NULL, --ativo ou não
 peso_bruto NUMERIC(10,3), --peso bruto do produto
 peso_liquido NUMERIC(10,3), --peso líquido do produto
-id_ge_lote INTEGER, --id do lote
+id_ge_lote INTEGER UNIQUE, --id do lote
 valor_custo NUMERIC(10,2), --valor de custo do produto
 valor_venda NUMERIC(10,2), --valor de venda do produto
 min_estoque NUMERIC(10,3) CHECK (min_estoque >= 0) NOT NULL, --mínimo em estoque do produto
@@ -115,7 +115,7 @@ id_gf_fornecedor INTEGER NOT NULL, --id do fornecedor de tal produto
 quantia_estoque NUMERIC(10,3) CHECK (quantia_estoque >= 0) NOT NULL, --quantia em estoque atual do produto de tal fornecedor
 valor_custo NUMERIC(10,2), --valor de custo do produto, caso não tenha pegará o val_total/quantia na entrada de movimentação de estoque
 valor_venda NUMERIC(10,2), --valor de venda do produto
-id_ge_lote INTEGER, --id do lote
+id_ge_lote INTEGER UNIQUE, --id do lote
 id_ge_estoque INTEGER NOT NULL, --id do estoque a qual o produto se encontra
 id_ga_usuario INTEGER NOT NULL, --id do usuário que realizou a inserção no sistema
 criado TIMESTAMP NOT NULL, --data da inserção no sistema
@@ -199,34 +199,35 @@ FOREIGN KEY(id_ge_op_mov_estoque) REFERENCES ge_op_estoque(id)
 --------------------------------------------------------------------------
 --VIEW FORNECEDORES
 CREATE OR REPLACE VIEW public.vw_gf_fornecedores
-AS SELECT f.razao_social,
-    f.nome_fantasia,
-    f.telefone,
-    f.email,
-    f.end_logr AS rua,
-    f.end_num AS num_rua,
-    f.end_cep AS cep,
-    f.end_bairro AS bairro,
-    f.end_localid AS cidade,
-    f.end_compl as complemento,
-    f.end_uf AS estado,
-    f.cnpj,
-    f.ie,
+AS SELECT j.razao_social,
+    j.nome_fantasia,
+    j.telefone,
+    j.email,
+    j.end_logr AS rua,
+    j.end_num AS num_rua,
+    j.end_cep AS cep,
+    j.end_bairro AS bairro,
+    j.end_localid AS cidade,
+    j.end_compl as complemento,
+    j.end_uf AS estado,
+    j.cnpj,
+    j.ie,
         CASE
             WHEN f.ativo = true THEN 'Sim'::text
             ELSE 'Não'::text
         END AS ativo,
         CASE
-        	WHEN f.isento_icms = true THEN 'Sim'::text
+        	WHEN j.isento_icms = true THEN 'Sim'::text
         	ELSE 'Não'::text
         END AS isento_icms,
                 case
-        	WHEN f.opt_simpl_nacional = true THEN 'Sim'::text
+        	WHEN j.opt_simpl_nacional = true THEN 'Sim'::text
         	ELSE 'Não'::text
         END AS opt_simpl_nacional,
     f.criado,
     f.editado
-   FROM gf_fornecedor f;
+   FROM gf_fornecedor f
+   	JOIN rh_pessoa_juridica j ON f.id_rh_pessoa_jur = j.id;
 -------------------------------------------------------------------------------
 --VIEW MOVIMENTACOES DE ESTOQUE quantiade, valor
 CREATE OR REPLACE VIEW public.vw_ge_movs_estoque
@@ -258,8 +259,8 @@ AS SELECT ge_mov_estoque.id AS id_mov_estoque,
 --VIEW PRODUTOS E RESPECTIVOS FORNECEDORES
  CREATE OR REPLACE VIEW public.vw_ge_produto_fornecedor
 AS SELECT gf_fornecedor.id AS id_fornecedor,
-	gf_fornecedor.razao_social AS razao_social_fornecedor,
-    gf_fornecedor.cnpj,
+	rh_pessoa_juridica.razao_social AS razao_social_fornecedor,
+    rh_pessoa_juridica.cnpj,
 	p.codigo AS cod_produto,
     p.descricao AS desc_produto,
     p.cod_barras AS cod_barras_produto,
@@ -278,6 +279,7 @@ AS SELECT gf_fornecedor.id AS id_fornecedor,
      JOIN ge_unidade_medida um ON p.id_unid_medida = um.id
      LEFT JOIN ge_lote ON ge_produto_fornecedor.id_ge_lote = ge_lote.id
      JOIN gf_fornecedor ON ge_produto_fornecedor.id_gf_fornecedor = gf_fornecedor.id
+     join rh_pessoa_juridica on rh_pessoa_juridica.id = gf_fornecedor.id_rh_pessoa_jur 
      JOIN ga_usuario ON ge_produto_fornecedor.id_ga_usuario = ga_usuario.id; 
 -------------------------------------------------------------------------------
 --VIEW PRODUTOS
@@ -347,10 +349,10 @@ DECLARE
 	qtd_atual_prod_f_l_e NUMERIC(10,3) := (SELECT pf.quantia_estoque FROM ge_produto_fornecedor AS pf WHERE id_ge_prod = NEW.id_ge_prod AND id_gf_fornecedor = NEW.id_gf_fornecedor AND id_ge_lote = NEW.id_ge_lote AND id_ge_estoque = NEW.id_ge_estoque);
 	
 	--quantia atual do produto, ignorando lote, fornecedor e estoque
-	qtd_atual_prod NUMERIC(10,3) := (SELECT p.quantia_estoque FROM ge_produto p WHERE p.id = NEW.id_ge_prod);
+	qtd_atual_prod NUMERIC(10,3) := (SELECT p.estoque_atual  FROM ge_produto p WHERE p.id = NEW.id_ge_prod);
 	
 	--quantia atual do produto por lote, sem fornecedor.
-	qtd_atual_prod_l NUMERIC(10,3) := (SELECT p.quantia_estoque FROM ge_produto p WHERE p.id = NEW.id_ge_prod AND p.id_ge_lote = NEW.id_ge_lote);
+	qtd_atual_prod_l NUMERIC(10,3) := (SELECT p.estoque_atual  FROM ge_produto p WHERE p.id = NEW.id_ge_prod AND p.id_ge_lote = NEW.id_ge_lote);
 	
 	--quantia maxima em estoque do produto, ignorando lote e fornecedor
 	qtd_max_estoq_prod NUMERIC(10,3) := (SELECT p.max_estoque FROM ge_produto p WHERE p.id = NEW.id_ge_prod);
@@ -382,7 +384,7 @@ IF ge_produto_ativo = true THEN --se o produto estiver ativo
 								USING HINT = 'Verifique o campo max_estoque do cadastro do produto';
 							ELSE 
 								UPDATE ge_produto
-								SET id_ge_estoque = NEW.id_ge_estoque, quantia_estoque = (qtd_atual_prod + NEW.quantidade), editado = CURRENT_TIMESTAMP
+								SET id_ge_estoque = NEW.id_ge_estoque, estoque_atual  = (qtd_atual_prod + NEW.quantidade), editado = CURRENT_TIMESTAMP
 								WHERE id = NEW.id_ge_prod;
 								RETURN NEW;
 							END IF;
@@ -428,7 +430,7 @@ IF ge_produto_ativo = true THEN --se o produto estiver ativo
 							ELSE 
 								IF EXISTS (SELECT 1 FROM ge_produto p WHERE p.id = NEW.id_ge_prod AND p.id_ge_lote = NEW.id_ge_lote) THEN --caso o produto informado já esteja cadastrado, com lote
 									UPDATE ge_produto
-									SET id_ge_estoque = NEW.id_ge_estoque, id_ge_lote = NEW.id_ge_lote, quantia_estoque = (qtd_atual_prod_l + NEW.quantidade), editado = CURRENT_TIMESTAMP
+									SET id_ge_estoque = NEW.id_ge_estoque, id_ge_lote = NEW.id_ge_lote, estoque_atual  = (qtd_atual_prod_l + NEW.quantidade), editado = CURRENT_TIMESTAMP
 									WHERE id = NEW.id_ge_prod;
 									RETURN NEW;
 								ELSE --caso o produto informado não esteja cadastrado
@@ -484,6 +486,7 @@ END IF;
 RETURN NEW;
 END;
 $fn_verifica_ge_movs_estoque$ LANGUAGE plpgsql;
+
 
 CREATE TRIGGER trg_verif_movs
 	BEFORE INSERT ON ge_mov_estoque 
