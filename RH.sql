@@ -70,7 +70,7 @@ end_bairro VARCHAR(255), --bairro
 end_localid VARCHAR(255), --localidade, cidade
 end_uf VARCHAR(2), --UF PR, SC e etc
 cnpj VARCHAR(14) UNIQUE, --cnpj da pessoa juridica
-ie VARCHAR(9) UNIQUE, --inscrição estadual da pessoa juridica
+ie VARCHAR(20) UNIQUE, --inscrição estadual da pessoa juridica
 isento_icms BOOLEAN, --pessoa juridica isento do icms ?
 opt_simpl_nacional BOOLEAN, --pessoa juridica optante pelo simples nacional ?
 ativo BOOLEAN NOT NULL, --pessoa juridica esta ativo ou não
